@@ -13,6 +13,7 @@ runtime/
 *.exe
 *.zip
 build/payload.zip
+public/img/app-icon.png
 
 # Logs
 *.log

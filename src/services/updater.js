@@ -155,20 +155,20 @@ class UpdaterService {
       const kbSource = path.join(sourceDir, 'data', 'knowledge_base.json');
       const kbDest = path.join(this.rootPath, 'data', 'knowledge_base.json');
       if (fs.existsSync(kbSource)) {
-        fs.copyFileSync(kbSource, kbDest);
+        this.safeCopyFileSync(kbSource, kbDest);
       }
 
       // 4. Copiar version.json
       const verSource = path.join(sourceDir, 'version.json');
       if (fs.existsSync(verSource)) {
-        fs.copyFileSync(verSource, this.versionFilePath);
+        this.safeCopyFileSync(verSource, this.versionFilePath);
       }
 
       // 5. Copiar package.json si existe
       const pkgSource = path.join(sourceDir, 'package.json');
       const pkgDest = path.join(this.rootPath, 'package.json');
       if (fs.existsSync(pkgSource)) {
-        fs.copyFileSync(pkgSource, pkgDest);
+        this.safeCopyFileSync(pkgSource, pkgDest);
       }
 
       console.log('[Updater] ✅ Actualización de código completada con éxito.');
@@ -198,6 +198,18 @@ class UpdaterService {
     }
   }
 
+  safeCopyFileSync(srcPath, destPath) {
+    try {
+      fs.copyFileSync(srcPath, destPath);
+    } catch (err) {
+      if (err.code === 'EBUSY' || err.code === 'EPERM' || err.code === 'EACCES') {
+        console.warn(`[Updater] Archivo en uso protegido por Windows (se conserva el existente): ${destPath}`);
+      } else {
+        throw err;
+      }
+    }
+  }
+
   copyRecursiveSync(src, dest) {
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(dest, { recursive: true });
@@ -209,7 +221,7 @@ class UpdaterService {
       if (entry.isDirectory()) {
         this.copyRecursiveSync(srcPath, destPath);
       } else {
-        fs.copyFileSync(srcPath, destPath);
+        this.safeCopyFileSync(srcPath, destPath);
       }
     }
   }
