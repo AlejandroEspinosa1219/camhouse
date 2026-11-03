@@ -3,6 +3,7 @@ const {
   useMultiFileAuthState,
   makeCacheableSignalKeyStore,
   DisconnectReason,
+  fetchLatestWaWebVersion,
   fetchLatestBaileysVersion,
   downloadMediaMessage,
   Browsers,
@@ -127,12 +128,21 @@ class WhatsAppManager {
 
     try {
       const { state, saveCreds } = await useMultiFileAuthState(line.folder);
-      const { version } = await fetchLatestBaileysVersion();
+      let waVersion = [2, 3000, 1052938686];
+      try {
+        const vInfo = await fetchLatestWaWebVersion();
+        if (vInfo && vInfo.version) {
+          waVersion = vInfo.version;
+        }
+      } catch (ve) {
+        console.warn(`[WhatsAppManager] [${line.name}] No se pudo consultar versión live, usando fallback:`, ve.message);
+      }
+
       const logger = pino({ level: 'silent' });
 
-      // Configuración ultra-estable para Windows: Caché de Signal Keys en RAM para evitar bloqueos NTFS de disco
+      // Configuración ultra-estable para Windows: Identidad Chrome oficial y Caché de Signal Keys en RAM
       const sock = makeWASocket({
-        version,
+        version: waVersion,
         logger,
         printQRInTerminal: false,
         auth: {
@@ -140,10 +150,10 @@ class WhatsAppManager {
           keys: makeCacheableSignalKeyStore(state.keys, logger)
         },
         syncFullHistory: false,
-        browser: Browsers.windows('Desktop'),
+        browser: Browsers.windows('Chrome'),
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
-        keepAliveIntervalMs: 15000,
+        keepAliveIntervalMs: 25000,
         qrTimeout: 60000,
         retryRequestDelayMs: 2000,
         markOnlineOnConnect: true,
@@ -683,6 +693,23 @@ class WhatsAppManager {
     return { success: true };
   }
 
+  cleanFolder(folderPath) {
+    try {
+      if (fs.existsSync(folderPath)) {
+        fs.rmSync(folderPath, { recursive: true, force: true });
+      }
+    } catch (e) {
+      try {
+        if (fs.existsSync(folderPath)) {
+          const files = fs.readdirSync(folderPath);
+          for (const f of files) {
+            try { fs.unlinkSync(path.join(folderPath, f)); } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
   // Reiniciar / Desconectar línea
   async restartLine(lineKey) {
     const line = this.lines[lineKey];
@@ -702,11 +729,7 @@ class WhatsAppManager {
 
       // Si la línea no estaba conectada con éxito, limpiamos credenciales para forzar un QR nuevo
       if (line.status !== 'connected') {
-        try {
-          if (fs.existsSync(line.folder)) {
-            fs.rmSync(line.folder, { recursive: true, force: true });
-          }
-        } catch (e) {}
+        this.cleanFolder(line.folder);
       }
 
       line.isStarting = false;
@@ -731,19 +754,13 @@ class WhatsAppManager {
       if (line.socket) {
         try {
           line.socket.ev.removeAllListeners();
-          await line.socket.logout();
+          line.socket.end(undefined);
         } catch (e) {}
         line.socket = null;
       }
 
       // Limpiar carpeta de credenciales para permitir un nuevo escaneo limpio
-      try {
-        if (fs.existsSync(line.folder)) {
-          fs.rmSync(line.folder, { recursive: true, force: true });
-        }
-      } catch (e) {
-        console.warn(`[WhatsAppManager] Error limpiando carpeta ${line.folder}:`, e.message);
-      }
+      this.cleanFolder(line.folder);
 
       line.isStarting = false;
       line.status = 'disconnected';
