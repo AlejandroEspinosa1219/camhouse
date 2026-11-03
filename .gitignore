@@ -1,0 +1,23 @@
+# Entorno y credenciales privadas (¡NUNCA SUBIR A GITHUB!)
+.env
+auth_sessions/
+auth_sessions/*
+
+# Almacenamiento local de chats y métricas de producción
+data/chats.json
+data/metrics.json
+
+# Paquetes y binarios pesados
+node_modules/
+runtime/
+*.exe
+*.zip
+build/payload.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

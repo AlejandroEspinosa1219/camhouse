@@ -1,0 +1,104 @@
+{
+  "studio_info": {
+    "name": "CamHouse By C&A",
+    "description": "Estudio y Agencia Premium de Creadoras de Contenido y Transmisión con estándares internacionales de privacidad y confort.",
+    "locations": [
+      {
+        "city": "Medellín",
+        "neighborhood": "El Poblado / Provenza",
+        "address": "Carrera 35 # 8A - 42, Edificio CamHouse Corporate"
+      },
+      {
+        "city": "Bogotá",
+        "neighborhood": "Chapinero Alto / Calle 70",
+        "address": "Calle 70A # 9 - 18, Sede Boutique Privada"
+      }
+    ],
+    "hours": "Operación continua 24/7 en turnos rotativos o fijos.",
+    "support_contact": "+57 300 000 0000"
+  },
+  "linea_reclutamiento": {
+    "welcome_message": "¡Hola! Bienvenida a CamHouse By C&A. ✨ Nos alegra mucho tu interés en formar parte de nuestra agencia. Aquí valoramos tu privacidad, tu tiempo y tu crecimiento financiero. ¿En qué te podemos orientar hoy?",
+    "requisitos": [
+      "Ser mayor de 18 años (requisito legal indispensable).",
+      "Documento de identidad original y vigente (Cédula de Ciudadanía colombiana, Extranjería o Pasaporte vigente).",
+      "Disponibilidad de tiempo y compromiso con tus metas de ingresos.",
+      "Excelente actitud, carisma y deseos de superación personal.",
+      "NO se requiere experiencia previa: te brindamos formación 100% personalizada y gratuita desde el primer día."
+    ],
+    "modalidades": {
+      "presencial": {
+        "titulo": "Modalidad Presencial (Estudio de Lujo)",
+        "descripcion": "Transmite desde nuestras suites boutique totalmente privadas, insonorizadas y climatizadas.",
+        "equipamiento": [
+          "Cámaras 4K Sony Alpha profesionales con óptica cinematográfica.",
+          "Monitores duales de alta tasa de refresco y computadores gamer i7 / RTX.",
+          "Iluminación LED y RGB profesional con tocador estilo Hollywood.",
+          "Micrófonos de estudio con cancelación de ruido ambiental.",
+          "Habitaciones insonorizadas, climatizadas con aire acondicionado y decoración contemporánea de lujo."
+        ],
+        "porcentajes": "50% al 60% libre según escala progresiva sin descuentos ocultos de habitación ni equipos.",
+        "turnos": [
+          "Mañana: 06:00 AM a 02:00 PM",
+          "Tarde: 02:00 PM a 10:00 PM",
+          "Noche / Madrugada: 10:00 PM a 06:00 AM"
+        ]
+      },
+      "satelite": {
+        "titulo": "Modalidad Satélite (Desde Casa)",
+        "descripcion": "Genera ingresos desde la comodidad y privacidad de tu propio espacio con acompañamiento remoto.",
+        "requisitos_tecnicos": [
+          "Computador o portátil (procesador mínimo Intel i5 o AMD Ryzen 5, 8GB+ RAM).",
+          "Cámara web Full HD (1080p a 60fps o 4K).",
+          "Conexión a internet fibra óptica cableada (mínimo 50 Mbps estables).",
+          "Habitación privada, silenciosa y bien iluminada."
+        ],
+        "porcentajes": "Hasta el 70% u 80% sobre tus ganancias brutas en plataformas autorizadas.",
+        "asistencia": "Capacitación virtual, monitoreo en tiempo real vía software y soporte técnico remoto diario."
+      }
+    },
+    "seguridad_y_privacidad": {
+      "geobloqueo": "Garantizamos GEOBLOQUEO 100% INFALIBLE a nivel de país (Colombia y países de habla hispana que solicites). Nadie en tu ciudad, ni familiares, vecinos, amigos o exparejas podrán acceder a tu perfil ni ver tus transmisiones.",
+      "proteccion_datos": "Tus datos personales y documentos son estrictamente confidenciales bajo la Ley 1581 de protección de datos. En las plataformas utilizas un seudónimo / nombre artístico para proteger tu identidad.",
+      "seguridad_fisica": "Sedes con control de acceso biométrico, vigilancia y portería privada 24/7 sin carteles exteriores visibles para máxima discreción."
+    },
+    "beneficios": [
+      "Capacitación profesional personalizada desde el nivel básico hasta modelos top.",
+      "Acompañamiento y monitoreo en vivo 24/7 para asesorarte durante tus horas de transmisión.",
+      "Sesiones fotográficas y de video profesional gratuitas para tus perfiles.",
+      "Clases prácticas de inglés conversacional enfocado en engagement y propinas.",
+      "Asesoría de imagen, maquillaje, peinado y estilismo.",
+      "Pagos puntuales quincenales por transferencia bancaria (Bancolombia, Davivienda, Nequi) o en dólares/cripto (USDT).",
+      "Adelantos de nómina y préstamos corporativos tras el período de prueba.",
+      "Bonos en dólares y premios por metas alcanzadas."
+    ],
+    "faq": [
+      {
+        "pregunta": "¿Necesito saber inglés?",
+        "respuesta": "No es obligatorio. Las páginas cuentan con traductor automático integrado en el chat y nuestro equipo de monitores te ayuda en tiempo real mientras te capacitamos con nuestras clases de inglés práctico."
+      },
+      {
+        "pregunta": "¿Qué tipo de contenido debo hacer?",
+        "respuesta": "Tú defines tus propios límites. Existen categorías de conversación (no explícito / flirteo / baile / compañía) y categorías explícitas. En CamHouse By C&A respetamos 100% tu zona de confort y nunca te obligamos a hacer nada con lo que no te sientas a gusto."
+      },
+      {
+        "pregunta": "¿Cuánto puedo ganar?",
+        "respuesta": "Los ingresos son variables según constancia y carisma. Una modelo principiante comprometida suele generar entre $2'500.000 y $4'500.000 COP en sus primeros meses, y modelos intermedias/avanzadas superan los $8'000.000 a $25'000.000 COP mensuales."
+      },
+      {
+        "pregunta": "¿Cómo agendo una entrevista?",
+        "respuesta": "Puedes indicarme tu nombre completo, ciudad de preferencia (Medellín, Bogotá o Satélite) y el día que te gustaría asistir. Con gusto te agendamos una entrevista privada y un tour guiado por nuestras instalaciones."
+      }
+    ]
+  },
+  "linea_administracion": {
+    "welcome_message": "¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️",
+    "requisitos": [
+      "Tener entre 22 y 40 años.",
+      "Documento de identidad original y vigente (Cédula de Ciudadanía colombiana, Extranjería o Pasaporte vigente).",
+      "Contar con un espacio privado en casa en Medellín o área metropolitana.",
+      "Disponibilidad de 6 horas diarias de conexión.",
+      "NO se requiere experiencia previa ni invertir un solo peso."
+    ]
+  }
+}

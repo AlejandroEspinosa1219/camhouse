@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamHouse By C&A — Centro de Control WhatsApp & IA</title>
+  <link rel="icon" type="image/png" href="/img/app-icon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Socket.io Client -->
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <!-- Custom CSS (con anti-caché) -->
+  <link rel="stylesheet" href="/css/style.css?v=3.3.4">
+</head>
+<body class="dark-theme not-authenticated">
+
+  <div class="layout-wrapper">
+    
+    <!-- ============================================================== -->
+    <!-- SIDEBAR VERTICAL IZQUIERDO (Estilo MAMM Reference)            -->
+    <!-- ============================================================== -->
+    <aside class="sidebar">
+      
+      <!-- Logo Oficial CamHouse By C&A -->
+      <div class="sidebar-brand">
+        <div class="brand-logo-container">
+          <img src="/img/logo.png" alt="CamHouse By C&A" class="brand-logo-img" />
+        </div>
+        <div class="brand-meta">
+          <span class="brand-name">CAMHOUSE</span>
+          <span class="brand-by">By C&A • Enterprise</span>
+        </div>
+      </div>
+
+      <!-- Selector de Línea Compacto (Línea 1 y Línea 2 de Reclutamiento) -->
+      <div class="sidebar-line-picker">
+        <span class="picker-label">LÍNEA SELECCIONADA</span>
+        <div class="line-toggle-group">
+          <button id="btn-line-1" class="line-toggle-btn active" onclick="switchActiveLine('linea_reclutamiento')">
+            <span class="dot dot-violet"></span>
+            <span class="line-info">
+              <strong>Línea 1</strong>
+              <small>Reclutamiento</small>
+            </span>
+            <span id="badge-derivation-line1" class="alert-indicator hidden">!</span>
+          </button>
+          <button id="btn-line-2" class="line-toggle-btn" onclick="switchActiveLine('linea_administracion')">
+            <span class="dot dot-fuchsia"></span>
+            <span class="line-info">
+              <strong>Línea 2</strong>
+              <small>Reclutamiento</small>
+            </span>
+            <span id="badge-derivation-line2" class="alert-indicator hidden">!</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Menú de Navegación Vertical -->
+      <nav class="sidebar-nav">
+        <ul class="nav-list">
+          <li class="nav-item active" onclick="switchTab('qr')">
+            <div class="nav-link">
+              <i class="fa-solid fa-qrcode"></i>
+              <span>CONEXIÓN QR</span>
+            </div>
+            <span class="nav-status-dot" id="dot-nav-qr"></span>
+          </li>
+          <li class="nav-item" onclick="switchTab('chats')">
+            <div class="nav-link">
+              <i class="fa-solid fa-comments"></i>
+              <span>CHATS & ASESORES</span>
+            </div>
+            <span id="badge-pending-chats" class="nav-counter">2</span>
+          </li>
+          <li class="nav-item" onclick="switchTab('knowledge')" style="display: none !important;">
+            <div class="nav-link">
+              <i class="fa-solid fa-book-bookmark"></i>
+              <span>BASE CONOCIMIENTO</span>
+            </div>
+          </li>
+          <li class="nav-item" onclick="switchTab('metrics')">
+            <div class="nav-link">
+              <i class="fa-solid fa-chart-pie"></i>
+              <span>MÉTRICAS & CONVERSIÓN</span>
+            </div>
+          </li>
+          <li class="nav-item" onclick="switchTab('simulator')">
+            <div class="nav-link">
+              <i class="fa-solid fa-vial"></i>
+              <span>SIMULADOR DE PRUEBAS</span>
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Pie de Sidebar: Motor IA y Operador -->
+      <div class="sidebar-footer">
+        <div class="ai-badge-card" onclick="openKeyModal()" style="display: none !important;">
+          <div class="ai-badge-icon">
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <div class="ai-badge-info">
+            <span class="ai-badge-title">TECNOLOGÍA DE IA</span>
+            <strong id="txt-ai-engine">Groq LLaMA / Qwen</strong>
+          </div>
+        </div>
+
+        <div class="user-profile-card">
+          <div class="user-avatar">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <div class="user-info">
+            <span class="user-name" id="user-display-name">Coordinación CamHouse</span>
+            <span class="user-status">● Operador En Línea</span>
+          </div>
+          <button class="btn-logout-sidebar" onclick="handleLogout()" title="Cerrar Sesión">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- CONTENIDO PRINCIPAL                                           -->
+    <!-- ============================================================== -->
+    <div class="main-wrapper">
+      
+      <!-- Fondo Ambiental de Lujo Nocturno -->
+      <div class="main-ambient-bg" aria-hidden="true"></div>
+
+      <!-- Fondo Corporativo Oficial CamHouse By C&A -->
+      <div class="brand-bg-watermark" aria-hidden="true">
+        <img src="/img/logo-dark-mode.png" alt="" class="bg-watermark-img" />
+      </div>
+      
+      <!-- Header Superior Limpio -->
+      <header class="top-header">
+        <div class="header-titles">
+          <h2 id="page-title">Conexión de WhatsApp</h2>
+          <p id="page-subtitle">Vincula y monitorea el estado del asistente en tiempo real para CamHouse By C&A</p>
+        </div>
+
+        <div class="header-controls">
+          <!-- Control de Sonido -->
+          <button class="header-btn" id="btn-toggle-sound" onclick="toggleSound()" title="Silenciar / Activar Alertas">
+            <i class="fa-solid fa-volume-high"></i>
+          </button>
+
+          <!-- Selector Rápido de Línea en Cabecera -->
+          <div class="header-line-switcher" title="Alternar entre Línea 1 y Línea 2">
+            <button type="button" class="header-line-btn active" id="hdr-btn-line1" onclick="switchActiveLine('linea_reclutamiento')">Línea 1</button>
+            <button type="button" class="header-line-btn" id="hdr-btn-line2" onclick="switchActiveLine('linea_administracion')">Línea 2</button>
+          </div>
+
+          <!-- Estado de Conexión de Línea Activa -->
+          <div class="connection-status-pill" id="pill-current-status">
+            <span class="status-indicator-dot"></span>
+            <span id="txt-current-status">Conectando...</span>
+          </div>
+
+          <!-- Reloj Digital en Vivo -->
+          <div class="live-clock">
+            <i class="fa-regular fa-clock"></i>
+            <span id="live-clock-text">--:--:--</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ============================================================== -->
+      <!-- BANNER OFICIAL DE ACTUALIZACIÓN DISPONIBLE (GITHUB OTA)        -->
+      <!-- ============================================================== -->
+      <div id="ota-update-banner" class="ota-update-banner hidden">
+        <div class="ota-banner-content">
+          <span class="ota-badge"><i class="fa-solid fa-sparkles fa-bounce"></i> NUEVA ACTUALIZACIÓN</span>
+          <span class="ota-text">Hay una nueva versión oficial de CamHouse (<strong id="ota-version-tag">v1.0.1</strong>): <span id="ota-changelog-text">Mejoras de rendimiento y respuestas de IA.</span></span>
+        </div>
+        <div class="ota-banner-actions">
+          <button id="btn-apply-update" class="btn-ota-update" onclick="applySystemUpdate()">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Actualizar con 1 Clic
+          </button>
+          <button class="btn-ota-dismiss" onclick="dismissUpdateBanner()" title="Ocultar aviso"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- Contenedor de Vistas -->
+      <main class="content-body">
+
+        <!-- ============================================================== -->
+        <!-- TAB 1: CONEXIÓN QR (Idéntica a la Imagen 4 de Referencia)      -->
+        <!-- ============================================================== -->
+        <section id="tab-qr" class="tab-panel active">
+          
+          <!-- Selector Elegante de Línea para Conexión QR -->
+          <div class="qr-line-selector-bar">
+            <div class="qr-line-tabs">
+              <button type="button" class="qr-line-tab-btn active" id="qr-tab-line1" onclick="switchActiveLine('linea_reclutamiento')">
+                <span class="qr-tab-dot dot-l1"></span>
+                <div class="qr-tab-texts">
+                  <span class="qr-tab-title">Línea 1 (Reclutamiento)</span>
+                  <small class="qr-tab-status" id="qr-pill-status-line1">● Conectando...</small>
+                </div>
+              </button>
+              <button type="button" class="qr-line-tab-btn" id="qr-tab-line2" onclick="switchActiveLine('linea_administracion')">
+                <span class="qr-tab-dot dot-l2"></span>
+                <div class="qr-tab-texts">
+                  <span class="qr-tab-title">Línea 2 (Reclutamiento 2)</span>
+                  <small class="qr-tab-status" id="qr-pill-status-line2">● Conectando...</small>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="qr-view-container">
+            
+            <!-- Columna Izquierda: Tarjeta Código QR -->
+            <div class="qr-box-card">
+              <div class="card-head">
+                <div class="head-icon">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <div class="head-text">
+                  <h3>Código QR de Vinculación</h3>
+                  <p id="qr-target-line-desc">Escanea con tu WhatsApp para conectar la Línea 1 (Reclutamiento)</p>
+                </div>
+              </div>
+
+              <div class="qr-screen-frame" id="box-qr-display">
+                <!-- Estado Cargando / Generando -->
+                <div class="qr-state-loading" id="qr-state-loading">
+                  <i class="fa-solid fa-circle-notch fa-spin"></i>
+                  <p>Generando código QR seguro...</p>
+                </div>
+
+                <!-- Imagen QR -->
+                <img id="img-qr-code" class="qr-code-img hidden" alt="Código QR WhatsApp" />
+
+                <!-- Estado Vinculado con Éxito -->
+                <div id="box-qr-connected" class="qr-state-connected hidden">
+                  <div class="check-icon-circle">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <h4>¡WhatsApp Vinculado!</h4>
+                  <p id="txt-connected-phone">+57 ...</p>
+                  <span class="session-path-label" id="txt-session-folder">./auth_sessions/linea_reclutamiento</span>
+                </div>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="qr-btn-row">
+                <button class="btn-qr-action btn-gen-qr" onclick="restartActiveWhatsAppLine()">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                  <span>Generar Nuevo QR</span>
+                </button>
+                <button class="btn-qr-action btn-unlink-qr" onclick="logoutActiveWhatsAppLine()">
+                  <i class="fa-solid fa-link-slash"></i>
+                  <span>Desvincular Cuenta</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Paso a Paso e Información Anti-Baneo -->
+            <div class="qr-info-card">
+              <div class="card-head">
+                <div class="head-icon icon-bulb">
+                  <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div class="head-text">
+                  <h3>Paso a Paso para Conectar</h3>
+                  <p>Configuración rápida en 3 simples pasos</p>
+                </div>
+              </div>
+
+              <div class="steps-flow">
+                <div class="step-card">
+                  <div class="step-circle">1</div>
+                  <div class="step-detail">
+                    <strong>Abre WhatsApp en tu Celular</strong>
+                    <p>Ve a <strong>Ajustes / Menú</strong> y toca en <strong>Dispositivos vinculados</strong>.</p>
+                  </div>
+                </div>
+
+                <div class="step-card">
+                  <div class="step-circle">2</div>
+                  <div class="step-detail">
+                    <strong>Escanea el Código</strong>
+                    <p>Toca en <strong>Vincular un dispositivo</strong> y apunta la cámara al código QR de la izquierda.</p>
+                  </div>
+                </div>
+
+                <div class="step-card">
+                  <div class="step-circle">3</div>
+                  <div class="step-detail">
+                    <strong>¡Listo para Operar!</strong>
+                    <p>El cerebro de IA de CamHouse comenzará a responder preguntas sobre requisitos, porcentajes y geobloqueo automáticamente las 24 horas.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Insignia de Seguridad Anti-Baneo -->
+              <div class="antiban-card">
+                <div class="antiban-icon">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="antiban-info">
+                  <strong>Seguridad Anti-Baneo Activa</strong>
+                  <p>Simulación de tipeo humano con pausas inteligentes antes de cada respuesta y límite de flujo de mensajes por minuto.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 2: GESTIÓN DE VISITANTES & ASESORES (Estilo Imagen 2 MAMM) -->
+        <!-- ============================================================== -->
+        <section id="tab-chats" class="tab-panel">
+          <div class="visitors-monitoring-card">
+            
+            <!-- Cabecera de la Tarjeta de Monitoreo -->
+            <div class="monitoring-card-header">
+              <div class="monitoring-header-left">
+                <div class="monitoring-icon">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="monitoring-titles">
+                  <h3 id="txt-monitoring-title">Monitoreo de Visitantes y Estado del Asistente</h3>
+                  <p id="txt-monitoring-subtitle">Supervisa las conversaciones activas y pausa o reactiva la IA con un solo clic.</p>
+                </div>
+              </div>
+
+              <div class="monitoring-header-right">
+                <div class="monitoring-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="input-search-chats" placeholder="Buscar por nombre o número..." onkeyup="filterContacts()">
+                </div>
+                <button class="btn-clear-list" onclick="clearAllChatsList()" title="Vaciar todas las conversaciones de esta lista">
+                  <i class="fa-solid fa-broom"></i>
+                  <span>Limpiar Lista</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filtros Rápidos de Estado -->
+            <div class="monitoring-filters-row">
+              <button class="m-filter-pill active" onclick="filterByTag('all', this)">Todos</button>
+              <button class="m-filter-pill" onclick="filterByTag('human', this)">🚨 Asesor Requerido</button>
+              <button class="m-filter-pill" onclick="filterByTag('ai', this)">🤖 Atendidos por IA</button>
+              <button class="m-filter-pill" onclick="filterByTag('manual', this)">👤 Modo Manual</button>
+            </div>
+
+            <!-- Tabla de Monitoreo Moderna -->
+            <div class="monitoring-table-container">
+              <table class="monitoring-table">
+                <thead>
+                  <tr>
+                    <th>Visitante</th>
+                    <th>Teléfono / ID</th>
+                    <th>Último Mensaje</th>
+                    <th>Hora</th>
+                    <th>Estado del Bot</th>
+                    <th class="th-actions">Acción Rápida</th>
+                  </tr>
+                </thead>
+                <tbody id="visitors-table-body">
+                  <!-- Se genera dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- Drawer Lateral Deslizante para Abrir Chat en Vivo -->
+          <div id="drawer-chat-modal" class="chat-drawer-overlay hidden">
+            <div class="chat-drawer-content">
+              
+              <div class="chat-pane-header">
+                <div class="chat-target-meta">
+                  <div class="chat-target-avatar" id="chat-active-avatar">DM</div>
+                  <div class="chat-target-text">
+                    <div class="target-title-row">
+                      <h4 id="chat-active-name">Daniela Morales</h4>
+                      <span id="chat-active-badge-status" class="status-pill-badge">Aspirante Nueva</span>
+                    </div>
+                    <span id="chat-active-phone" class="target-phone">+57 310 999 8877</span>
+                  </div>
+                </div>
+
+                <div class="chat-pane-actions">
+                  <div class="ai-switch-container">
+                    <span class="ai-switch-label">Modo IA:</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="chk-ai-mode" onchange="toggleAIMode(this.checked)">
+                      <span class="slider-round"></span>
+                    </label>
+                  </div>
+                  <button class="btn-table-action btn-table-delete" onclick="deleteActiveChat()" title="Eliminar Conversación" style="padding: 7px 10px; font-size: 13px;">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                  <button class="btn-close-drawer" onclick="closeChatDrawer()">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Banner de Alerta de Derivación -->
+              <div id="escalation-alert-banner" class="escalation-alert-banner hidden">
+                <div class="escalation-icon">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="escalation-message">
+                  <strong>¡Derivación a Asesor Humano Detectada!</strong>
+                  <p>La aspirante solicitó agendar una entrevista o hablar con coordinación.</p>
+                </div>
+                <button class="btn-resolve-handoff" onclick="resolveHandoff()">
+                  <i class="fa-solid fa-check"></i> Atender
+                </button>
+              </div>
+
+              <!-- Historial de Mensajes -->
+              <div class="chat-messages-scroll" id="chat-messages-container">
+                <!-- Se llena dinámicamente -->
+              </div>
+
+              <!-- Respuestas Rápidas -->
+              <div class="quick-replies-bar">
+                <button class="quick-chip" onclick="insertTemplate('entrevista')">📅 Agendar Entrevista</button>
+                <button class="quick-chip" onclick="insertTemplate('geobloqueo')">🛡️ Geobloqueo</button>
+                <button class="quick-chip" onclick="insertTemplate('porcentajes')">💰 Porcentajes</button>
+                <button class="quick-chip" onclick="insertTemplate('sedes')">📍 Sedes</button>
+                <button class="quick-chip" onclick="insertTemplate('requisitos')">📋 Requisitos</button>
+              </div>
+
+              <!-- Formulario de Envío -->
+              <div class="chat-input-row">
+                <textarea id="txt-message-input" rows="2" placeholder="Escribe un mensaje como operador de CamHouse..." onkeydown="handleInputKeyDown(event)"></textarea>
+                <button class="btn-send-message" onclick="sendManualMessage()">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  <span>Enviar</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 3: BASE DE CONOCIMIENTO (Editable en caliente)             -->
+        <!-- ============================================================== -->
+        <section id="tab-knowledge" class="tab-panel">
+          <div class="knowledge-container">
+            <div class="knowledge-header">
+              <div>
+                <h3><i class="fa-solid fa-brain"></i> Base de Conocimiento — CamHouse By C&A</h3>
+                <p>Cualquier modificación guardada aquí actualiza la memoria del motor Groq en tiempo real sin reiniciar el servidor.</p>
+              </div>
+              <button class="btn-save-knowledge" onclick="saveKnowledgeBase()">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios en Vivo
+              </button>
+            </div>
+
+            <div class="knowledge-grid">
+              
+              <div class="kb-card">
+                <h4 class="kb-card-title"><i class="fa-solid fa-building"></i> Información de la Agencia</h4>
+                <div class="input-group">
+                  <label>Nombre Comercial:</label>
+                  <input type="text" id="kb-studio-name" />
+                </div>
+                <div class="input-group">
+                  <label>Descripción Institucional:</label>
+                  <textarea id="kb-studio-desc" rows="2"></textarea>
+                </div>
+                <div class="input-group">
+                  <label>Direcciones de Sedes (Medellín / Bogotá):</label>
+                  <textarea id="kb-studio-locations" rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="kb-card">
+                <h4 class="kb-card-title"><i class="fa-solid fa-user-plus"></i> Línea 1: Requisitos & Porcentajes</h4>
+                <div class="input-group">
+                  <label>Porcentajes Presencial (Suites de Lujo):</label>
+                  <input type="text" id="kb-rec-pct-presencial" />
+                </div>
+                <div class="input-group">
+                  <label>Porcentajes Satélite (Desde Casa):</label>
+                  <input type="text" id="kb-rec-pct-satelite" />
+                </div>
+                <div class="input-group">
+                  <label>Política de Geobloqueo & Privacidad:</label>
+                  <textarea id="kb-rec-geoblock" rows="3"></textarea>
+                </div>
+                <div class="input-group">
+                  <label>Requisitos Obligatorios (+18, Cédula):</label>
+                  <textarea id="kb-rec-requirements" rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="kb-card">
+                <h4 class="kb-card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Línea 2: Cortes de Pago & Administración</h4>
+                <div class="input-group">
+                  <label>Fechas de Corte de Pago:</label>
+                  <input type="text" id="kb-adm-corte" />
+                </div>
+                <div class="input-group">
+                  <label>Día de Pago Efectivo / Dispersión:</label>
+                  <input type="text" id="kb-adm-pago" />
+                </div>
+                <div class="input-group">
+                  <label>Política de Turnos y Permisos:</label>
+                  <textarea id="kb-adm-turnos" rows="2"></textarea>
+                </div>
+                <div class="input-group">
+                  <label>Protocolo de Soporte en Salas:</label>
+                  <textarea id="kb-adm-soporte" rows="2"></textarea>
+                </div>
+              </div>
+
+              <div class="kb-card">
+                <h4 class="kb-card-title"><i class="fa-solid fa-circle-question"></i> Respuestas a Preguntas Frecuentes</h4>
+                <div class="input-group">
+                  <label>¿Se necesita hablar inglés?:</label>
+                  <textarea id="kb-faq-ingles" rows="2"></textarea>
+                </div>
+                <div class="input-group">
+                  <label>¿Qué tipo de contenido se realiza?:</label>
+                  <textarea id="kb-faq-limites" rows="2"></textarea>
+                </div>
+                <div class="input-group">
+                  <label>¿Cuánto puede ganar una aspirante al inicio?:</label>
+                  <textarea id="kb-faq-ganancias" rows="2"></textarea>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 4: MÉTRICAS & CONVERSIÓN                                   -->
+        <!-- ============================================================== -->
+        <section id="tab-metrics" class="tab-panel">
+          
+          <!-- Barra de Acciones y Limpiador de Métricas -->
+          <div class="metrics-action-bar">
+            <div class="metrics-bar-info">
+              <span class="metrics-badge-live"><i class="fa-solid fa-circle-dot fa-fade"></i> Monitoreo en Tiempo Real</span>
+              <span class="metrics-info-hint">Los datos se acumulan automáticamente con cada mensaje y derivación</span>
+            </div>
+            <button class="btn-clear-metrics" onclick="resetAllMetrics()" title="Reiniciar todas las métricas y gráficos a cero (0)">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Reiniciar Métricas a Cero</span>
+            </button>
+          </div>
+
+          <div class="kpi-row">
+            <div class="kpi-mini-card">
+              <span class="kpi-label">Aspirantes Nuevas (Mes)</span>
+              <h3 class="kpi-number" id="kpi-aspirantes">0</h3>
+              <span class="kpi-subtext positive" id="kpi-aspirantes-trend"><i class="fa-solid fa-chart-line"></i> En tiempo real</span>
+            </div>
+            <div class="kpi-mini-card">
+              <span class="kpi-label">Entrevistas Agendadas</span>
+              <h3 class="kpi-number" id="kpi-entrevistas">0</h3>
+              <span class="kpi-subtext">Castings coordinados</span>
+            </div>
+            <div class="kpi-mini-card">
+              <span class="kpi-label">Conversión a Entrevista</span>
+              <h3 class="kpi-number" id="kpi-conversion">0.0%</h3>
+              <span class="kpi-subtext">Filtro de alta efectividad</span>
+            </div>
+            <div class="kpi-mini-card">
+              <span class="kpi-label">Resolución Autónoma IA</span>
+              <h3 class="kpi-number" id="kpi-ia-rate">100.0%</h3>
+              <span class="kpi-subtext">Sin intervención humana</span>
+            </div>
+          </div>
+
+          <div class="charts-container-grid">
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <h4><i class="fa-solid fa-chart-column"></i> Consultas & Entrevistas por Día</h4>
+                <span class="badge-tag">Últimos 7 días</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chartAspirantesDia"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <h4><i class="fa-solid fa-clock"></i> Horarios Pico de Mayor Tráfico</h4>
+                <span class="badge-tag">Flujo 24 Horas</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chartHorasPico"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <h4><i class="fa-solid fa-chart-pie"></i> Temas Más Consultados</h4>
+                <span class="badge-tag">Intereses</span>
+              </div>
+              <div class="chart-canvas-wrapper doughnut-center">
+                <canvas id="chartTemas"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <h4><i class="fa-solid fa-filter"></i> Embudo de Conversión de Creadoras</h4>
+              </div>
+              <div class="funnel-steps">
+                <div class="funnel-bar f-step-1">
+                  <span>1. Contacto Inicial WhatsApp</span>
+                  <strong id="funnel-step-1">100% (0 contactos)</strong>
+                </div>
+                <div class="funnel-bar f-step-2">
+                  <span>2. Validación de Requisitos & Privacidad</span>
+                  <strong id="funnel-step-2">0% (0 evaluadas)</strong>
+                </div>
+                <div class="funnel-bar f-step-3">
+                  <span>3. Derivación a Entrevista / Asesor</span>
+                  <strong id="funnel-step-3">0.0% (0 agendadas)</strong>
+                </div>
+                <div class="funnel-bar f-step-4">
+                  <span>4. Ingreso Activo a Estudio</span>
+                  <strong id="funnel-step-4">0.0% (0 modelos)</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 5: SIMULADOR DE PRUEBAS                                    -->
+        <!-- ============================================================== -->
+        <section id="tab-simulator" class="tab-panel">
+          <div class="simulator-wrapper">
+            
+            <!-- Vista Teléfono Móvil -->
+            <div class="phone-mockup">
+              <div class="phone-speaker"></div>
+              <div class="phone-display">
+                <div class="phone-chat-top">
+                  <div class="phone-avatar">🌸</div>
+                  <div class="phone-user-text">
+                    <strong>Aspirante de Prueba</strong>
+                    <span>En línea</span>
+                  </div>
+                </div>
+
+                <div class="phone-messages-body" id="sim-chat-body">
+                  <div class="phone-msg msg-from-bot">
+                    ¡Hola! Bienvenida a CamHouse By C&A. ✨ ¿En qué te podemos orientar hoy?
+                  </div>
+                </div>
+
+                <div class="phone-chat-bottom">
+                  <input type="text" id="sim-text-input" placeholder="Escribe un mensaje de prueba..." onkeydown="handleSimKeyDown(event)" />
+                  <button onclick="sendSimulatedMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel de Controles y Tests Rápidos -->
+            <div class="sim-controls-panel">
+              <div class="sim-panel-header">
+                <h3><i class="fa-solid fa-vial-circle-check"></i> Pruebas Rápidas de IA Groq</h3>
+                <p>Haz clic en cualquiera de estos escenarios para validar las respuestas y derivaciones en milisegundos:</p>
+              </div>
+
+              <div class="sim-tests-grid">
+                <button class="test-card-btn" onclick="runSimTest('¿Cómo funciona el tema de la privacidad y el geobloqueo?')">
+                  <i class="fa-solid fa-shield-halved"></i>
+                  <span>Privacidad / Geobloqueo en Colombia</span>
+                </button>
+                <button class="test-card-btn" onclick="runSimTest('¿Cuáles son los requisitos y documentos necesarios?')">
+                  <i class="fa-solid fa-id-card"></i>
+                  <span>Requisitos (Mayor de 18 y Cédula)</span>
+                </button>
+                <button class="test-card-btn" onclick="runSimTest('¿Cuánto puedo ganar y cuáles son los porcentajes de pago?')">
+                  <i class="fa-solid fa-hand-holding-dollar"></i>
+                  <span>Porcentajes (Presencial vs Satélite)</span>
+                </button>
+                <button class="test-card-btn" onclick="runSimTest('¿Tienen sede en Medellín y qué incluye la habitación?')">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span>Sede El Poblado y Equipos 4K</span>
+                </button>
+                <button class="test-card-btn btn-handoff" onclick="runSimTest('Hola, me gusta todo. Quiero agendar una entrevista presencial')">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>🚨 Derivación: "Quiero agendar entrevista"</span>
+                </button>
+                <button class="test-card-btn btn-handoff" onclick="runSimTest('Quiero hablar con un asesor humano por favor')">
+                  <i class="fa-solid fa-user-headset"></i>
+                  <span>🚨 Derivación: "Hablar con asesor humano"</span>
+                </button>
+              </div>
+
+              <div class="sim-logs-card">
+                <h5><i class="fa-solid fa-terminal"></i> Registro de Respuestas Groq AI:</h5>
+                <div id="sim-logs" class="sim-terminal-screen">
+                  <p class="term-neutral">[CamHouse Core] Motor Groq activo listo para procesar 100-500 chats diarios.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- Modal Configuración de API Key -->
+  <div id="modal-gemini" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-card-header">
+        <h4><i class="fa-solid fa-key"></i> Clave API del Motor de Inteligencia Artificial</h4>
+        <button class="btn-modal-close" onclick="closeKeyModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-card-body">
+        <p>Tu clave de <strong>Groq AI</strong> (`gsk_...`) ya está preconfigurada y operando en ultra-baja latencia con el modelo <strong>Qwen 3.8 / LLaMA</strong>.</p>
+        <div class="input-group">
+          <label>Clave API Groq:</label>
+          <input type="password" id="input-gemini-key" placeholder="gsk_..." value="" />
+          <small>Diseñado para atender de 100 a 500 usuarias al día sin retrasos.</small>
+        </div>
+      </div>
+      <div class="modal-card-footer">
+        <button class="btn-secondary" onclick="closeKeyModal()">Cerrar</button>
+        <button class="btn-primary" onclick="saveGeminiKey()">Guardar Clave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio para alertas de derivación -->
+  <audio id="audio-alert" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcHCek3fDCkF8uF1+e197NqGwsGVKW0t3Pt3Q3HE+Qzs/Mu39CIkWKxsjHvn5AIz2HvsLEtYVGIzV5ub/As45VLDNqs7a9up1eMTJep6y3t5xoMSpVn6ert7KgbTEsTJ6iqbKxp3E3L0uXnamtrKtzPDA=" type="audio/wav">
+  </audio>
+
+  <!-- ============================================================== -->
+  <!-- OVERLAY DE INICIO DE SESIÓN (LOGIN PRIVADO CAMHOUSE)           -->
+  <!-- ============================================================== -->
+  <div id="login-overlay" class="login-backdrop">
+    <div class="login-card-glass">
+      
+      <!-- Brand Logo Header -->
+      <div class="login-brand-header">
+        <div class="login-logo-container">
+          <img src="/img/logo.png" alt="CamHouse By C&A" class="login-logo-img">
+        </div>
+        <h2 class="login-brand-title">CAMHOUSE BY C&amp;A</h2>
+        <p class="login-brand-desc">Plataforma de Control &amp; Asistentes IA</p>
+        <div class="login-badge-secure">
+          <i class="fa-solid fa-shield-halved"></i> Acceso Privado &amp; Confidencial
+        </div>
+      </div>
+
+      <!-- Formulario de Autenticación -->
+      <form id="login-form" onsubmit="handleLoginSubmit(event)" class="login-form-body">
+        
+        <div class="login-field-group">
+          <label for="login-username"><i class="fa-solid fa-user"></i> Usuario</label>
+          <div class="login-input-wrap">
+            <input type="text" id="login-username" placeholder="Ingresa tu usuario" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="login-field-group">
+          <label for="login-password"><i class="fa-solid fa-lock"></i> Contraseña</label>
+          <div class="login-input-wrap">
+            <input type="password" id="login-password" placeholder="••••••••••••" required autocomplete="current-password">
+            <button type="button" class="btn-toggle-eye" onclick="togglePasswordVisibility()" title="Mostrar u ocultar contraseña">
+              <i class="fa-solid fa-eye" id="icon-eye-pass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="login-error-msg" class="login-error-alert hidden">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="login-error-text">Credenciales inválidas</span>
+        </div>
+
+        <button type="submit" class="btn-login-submit" id="btn-login-submit">
+          <span>Ingresar al Panel</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+        <div class="login-card-footer">
+          <i class="fa-solid fa-lock"></i> Conexión Encriptada • Servidor Privado CamHouse
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Contenedor de Notificaciones Toast -->
+  <div id="toast-container" class="toast-stack"></div>
+
+  <!-- Scripts (con anti-caché) -->
+  <script src="/js/charts.js?v=3.2.0"></script>
+  <script src="/js/app.js?v=3.3.4"></script>
+</body>
+</html>
