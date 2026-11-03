@@ -31,8 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAppUpdates();
 });
 
-// Verificación periódica de actualizaciones cada 15 minutos
-setInterval(checkAppUpdates, 15 * 60 * 1000);
+// Verificación periódica de actualizaciones cada 3 minutos y al enfocar la ventana
+setInterval(checkAppUpdates, 3 * 60 * 1000);
+window.addEventListener('focus', checkAppUpdates);
 
 async function checkAppUpdates() {
   try {
