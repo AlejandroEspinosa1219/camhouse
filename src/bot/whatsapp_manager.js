@@ -254,11 +254,6 @@ class WhatsAppManager {
           this.broadcastLineStatus(lineKey);
         }
       });
-          };
-          console.log(`[WhatsAppManager] [${line.name}] ¡CONECTADO CON ÉXITO! ID: ${line.user.id}`);
-          this.broadcastLineStatus(lineKey);
-        }
-      });
 
       // Evento de mensajes entrantes
       sock.ev.on('messages.upsert', async (m) => {

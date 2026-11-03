@@ -154,7 +154,7 @@ namespace CamHouseLauncher
 
             subStatusLabel = new Label
             {
-                Text = "Cargando módulos de WhatsApp y Gemini AI en segundo plano...",
+                Text = "Cargando módulos de WhatsApp e Inteligencia Artificial...",
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(196, 181, 253),
                 Location = new Point(16, 44),
@@ -279,62 +279,79 @@ namespace CamHouseLauncher
             return "node.exe";
         }
 
+        private int failureTicks = 0;
+
         private void StartBackendAsync()
         {
-            ThreadPool.QueueUserWorkItem(_ =>
+            ThreadPool.QueueUserWorkItem(_ => StartBackendInternal());
+        }
+
+        private void StartBackendInternal()
+        {
+            try
+            {
+                if (IsPortListening(port))
+                {
+                    return;
+                }
+
+                string nodeExe = ResolveNodeExecutable();
+                string entryScript = Path.Combine(baseDir, "src", "server.js");
+
+                if (!File.Exists(entryScript))
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        statusLabel.Text = "❌ Error: No se encontró src\\server.js";
+                        statusLabel.ForeColor = Color.FromArgb(248, 113, 113);
+                    });
+                    return;
+                }
+
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = nodeExe,
+                    Arguments = "\"" + entryScript + "\"",
+                    WorkingDirectory = baseDir,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                nodeProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                nodeProcess.OutputDataReceived += (s, e) => { };
+                nodeProcess.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        try
+                        {
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                subStatusLabel.Text = e.Data.Length > 80 ? e.Data.Substring(0, 80) + "..." : e.Data;
+                            });
+                        }
+                        catch { }
+                    }
+                };
+                nodeProcess.Start();
+                nodeProcess.BeginOutputReadLine();
+                nodeProcess.BeginErrorReadLine();
+            }
+            catch (Exception ex)
             {
                 try
                 {
-                    if (IsPortListening(port))
+                    this.Invoke((MethodInvoker)delegate
                     {
-                        return;
-                    }
-
-                    string nodeExe = ResolveNodeExecutable();
-                    string entryScript = Path.Combine(baseDir, "src", "server.js");
-
-                    if (!File.Exists(entryScript))
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            statusLabel.Text = "❌ Error: No se encontró src\\server.js";
-                            statusLabel.ForeColor = Color.FromArgb(248, 113, 113);
-                        });
-                        return;
-                    }
-
-                    ProcessStartInfo psi = new ProcessStartInfo
-                    {
-                        FileName = nodeExe,
-                        Arguments = "\"" + entryScript + "\"",
-                        WorkingDirectory = baseDir,
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    };
-
-                    nodeProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
-                    nodeProcess.OutputDataReceived += (s, e) => { };
-                    nodeProcess.ErrorDataReceived += (s, e) => { };
-                    nodeProcess.Start();
-                    nodeProcess.BeginOutputReadLine();
-                    nodeProcess.BeginErrorReadLine();
+                        statusLabel.Text = "⚠️ Error al iniciar el motor";
+                        statusLabel.ForeColor = Color.FromArgb(248, 113, 113);
+                        subStatusLabel.Text = ex.Message;
+                    });
                 }
-                catch (Exception ex)
-                {
-                    try
-                    {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            statusLabel.Text = "⚠️ Error al iniciar el motor";
-                            statusLabel.ForeColor = Color.FromArgb(248, 113, 113);
-                            subStatusLabel.Text = ex.Message;
-                        });
-                    }
-                    catch { }
-                }
-            });
+                catch { }
+            }
         }
 
         private void CheckServerHealth(object sender, EventArgs e)
@@ -342,10 +359,11 @@ namespace CamHouseLauncher
             bool listening = IsPortListening(port);
             if (listening)
             {
+                failureTicks = 0;
                 isServerReady = true;
                 statusLabel.Text = "🟢 Sistema Activo y Conectado (Puerto 4000)";
                 statusLabel.ForeColor = Color.FromArgb(74, 222, 128);
-                subStatusLabel.Text = "Bot IA Gemini 3.6 + WhatsApp listos. No cierres esta ventana mientras uses el bot.";
+                subStatusLabel.Text = "Bot WhatsApp & OpenAI GPT-4o-mini listos. No cierres esta ventana mientras uses el bot.";
 
                 if (!hasAutoOpened)
                 {
@@ -353,12 +371,16 @@ namespace CamHouseLauncher
                     OpenDesktopAppWindow();
                 }
             }
-            else if (isServerReady)
+            else
             {
-                isServerReady = false;
-                statusLabel.Text = "🔄 Reconectando servidor local...";
-                statusLabel.ForeColor = Color.FromArgb(250, 204, 21);
-                StartBackendAsync();
+                failureTicks++;
+                if (failureTicks >= 4 && (nodeProcess == null || nodeProcess.HasExited))
+                {
+                    failureTicks = 0;
+                    statusLabel.Text = "🔄 Levantando servidor local...";
+                    statusLabel.ForeColor = Color.FromArgb(250, 204, 21);
+                    StartBackendAsync();
+                }
             }
         }
 
@@ -411,9 +433,15 @@ namespace CamHouseLauncher
         {
             statusLabel.Text = "🔄 Reiniciando servidor y motor de IA...";
             statusLabel.ForeColor = Color.FromArgb(250, 204, 21);
-            StopNodeProcess();
             isServerReady = false;
-            StartBackendAsync();
+            failureTicks = 0;
+
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                StopNodeProcess();
+                Thread.Sleep(800);
+                StartBackendInternal();
+            });
         }
 
         private void StopNodeProcess()
@@ -423,8 +451,27 @@ namespace CamHouseLauncher
                 if (nodeProcess != null && !nodeProcess.HasExited)
                 {
                     nodeProcess.Kill();
+                    nodeProcess.WaitForExit(3000);
                     nodeProcess.Dispose();
                     nodeProcess = null;
+                }
+            }
+            catch { }
+
+            try
+            {
+                foreach (Process p in Process.GetProcessesByName("node"))
+                {
+                    try
+                    {
+                        string pPath = (p.MainModule != null) ? p.MainModule.FileName : "";
+                        if (!string.IsNullOrEmpty(pPath) && pPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
+                        {
+                            p.Kill();
+                            p.WaitForExit(2000);
+                        }
+                    }
+                    catch { }
                 }
             }
             catch { }
