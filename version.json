@@ -1,7 +1,7 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.0.7 — Corrección crítica: Saludo oficial de bienvenida Paso 1 y solicitud de nombre real sin confundir nombres de perfil de WhatsApp."
+  "changelog": "Versión 1.0.8 — Extracción perfecta de nombres (soporta 'También me llamo Alejandra') y filtrado total de risas 'jaja'."
 }

@@ -111,47 +111,59 @@ class AIAgent {
     return { isHandoff: false, reason: null };
   }
 
-  // Extractor centralizado e inquebrantable del nombre de la candidata
-  extractCandidateName(userMessage = '', conversationHistory = [], knownName = '') {
+  // Validación y limpieza estricta del nombre de la candidata
+  cleanAndValidateCandidateName(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    const firstWord = raw.trim().replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ]/g, '');
+    if (firstWord.length < 3 || firstWord.length > 18) return null;
+    const lower = firstWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // Regex para risas, onomatopeyas y afirmaciones/negaciones repetidas (ej: 'jaja', 'jeje', 'jajaja', 'sii', 'noo', 'xd', 'lol')
+    if (/^(s+i+|n+o+|j+[aeiou]+|h+[aeiou]+|x+d+|l+o+l+|a+y+|u+y+)$/i.test(lower)) return null;
+
     const blacklist = new Set([
       'hermosa', 'princesa', 'linda', 'reina', 'corazon', 'bella', 'amiga', 'querida', 'amor',
-      'claro', 'si', 'sí', 'hola', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'saludos',
+      'claro', 'si', 'sí', 'sii', 'siii', 'sip', 'sipi', 'sep', 'nop', 'nopi', 'nooo', 'noooo',
+      'hola', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'saludos',
       'gracias', 'muchas', 'mil', 'colombia', 'medellin', 'bello', 'envigado', 'itagui',
       'sabaneta', 'castilla', 'belen', 'poblado', 'laureles', 'robledo', 'manrique', 'aranjuez',
       'copacabana', 'girardota', 'caldas', 'estrella', 'bogota', 'cali', 'barranquilla',
       'cartagena', 'bucaramanga', 'cucuta', 'pereira', 'manizales', 'armenia', 'ibague',
-      'alejandra', 'ramirez', 'camhouse', 'modelo', 'webcam', 'casa', 'tengo', 'anos', 'año',
+      'camhouse', 'modelo', 'webcam', 'casa', 'tengo', 'anos', 'año',
       'vivo', 'desde', 'para', 'con', 'por', 'que', 'como', 'donde', 'cuanto', 'quien', 'cual',
       'todo', 'bien', 'super', 'excelente', 'perfecto', 'genial', 'entendido', 'listo', 'dale',
-      'ok', 'mujer', 'chica', 'aspirante', 'usuario', 'cliente', 'nombre', 'edad', 'sector',
-      'ciudad', 'barrio', 'parte', 'informacion', 'info', 'interesa', 'interesada', 'quiero',
-      'postulacion', 'oferta', 'trabajo', 'empleo', 'tiempo', 'disponibilidad', 'sola', 'pareja',
-      'system', 'notify', 'bot', 'admin', 'soporte', 'servicio', 'store', 'tienda', 'bunker',
-      'android', 'iphone', 'contacto', 'whatsapp', 'interes', 'postularme'
+      'ok', 'okay', 'oki', 'okey', 'vale', 'mujer', 'chica', 'aspirante', 'usuario', 'cliente',
+      'nombre', 'edad', 'sector', 'ciudad', 'barrio', 'parte', 'informacion', 'info',
+      'interesa', 'interesada', 'quiero', 'postulacion', 'oferta', 'trabajo', 'empleo',
+      'tiempo', 'disponibilidad', 'sola', 'pareja', 'system', 'notify', 'bot', 'admin',
+      'soporte', 'servicio', 'store', 'tienda', 'bunker', 'android', 'iphone', 'contacto',
+      'whatsapp', 'interes', 'postularme', 'jaja', 'jeje', 'jiji', 'jojo', 'jajaja', 'jejeje',
+      'jajajaja', 'jejejeje', 'jajajajaja', 'haha', 'hahaha', 'xd', 'lol', 'tambien', 'tambn',
+      'tbn', 'obvio', 'seguro', 'verdad', 'exacto', 'correcto', 'entonces', 'pues', 'bueno',
+      'mira', 'oye', 'bebe', 'bb', 'porfa', 'porfavor', 'favor', 'uno', 'una', 'unas', 'unos',
+      'mas', 'menos', 'muy', 'mucho', 'mucha', 'muchos', 'muchas', 'nada', 'poco', 'poca'
     ]);
 
-    const cleanAndValidate = (raw) => {
-      if (!raw || typeof raw !== 'string') return null;
-      const firstWord = raw.trim().replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ]/g, '');
-      if (firstWord.length < 3 || firstWord.length > 18) return null;
-      const lower = firstWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (blacklist.has(lower)) return null;
-      if (this.detectMale(firstWord)) return null;
-      return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
-    };
+    if (blacklist.has(lower)) return null;
+    if (this.detectMale(firstWord)) return null;
+    return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+  }
 
+  // Extractor centralizado e inquebrantable del nombre de la candidata
+  extractCandidateName(userMessage = '', conversationHistory = [], knownName = '') {
     const parseUserTextForName = (txt) => {
       if (!txt || typeof txt !== 'string') return null;
       const patterns = [
         /(?:me llamo|mi nombre es|soy|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i,
         /(?:^|\n)\s*([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+(?:tengo\s+)?\d{2}\s*(?:años|anos)?/i,
         /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/i,
-        /(?:^|\n)\s*hola[,.\s]+(?:soy\s+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i
+        /(?:^|\n)\s*hola[,.\s]+(?:soy\s+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i,
+        /^(?:hola[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})[!.]*$/i
       ];
       for (const regex of patterns) {
-        const m = txt.match(regex);
+        const m = txt.trim().match(regex);
         if (m && m[1]) {
-          const v = cleanAndValidate(m[1]);
+          const v = this.cleanAndValidateCandidateName(m[1]);
           if (v) return v;
         }
       }
@@ -169,8 +181,8 @@ class AIAgent {
         const askedForName = /(?:tu nombre|te llamas|como es tu nombre|tu nombre completo)/i.test(lastBotMsg.text);
         if (askedForName) {
           const words = (userMessage || '').trim().split(/\s+/).map(w => w.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ]/g, ''));
-          for (let i = words.length - 1; i >= 0; i--) {
-            const v = cleanAndValidate(words[i]);
+          for (let i = 0; i < words.length; i++) {
+            const v = this.cleanAndValidateCandidateName(words[i]);
             if (v) return v;
           }
         }
@@ -179,22 +191,24 @@ class AIAgent {
 
     // 3. Buscar en el historial previo de mensajes de la candidata
     if (Array.isArray(conversationHistory)) {
+      // 3.1 Primero en los mensajes de la candidata
       for (const m of conversationHistory) {
-        if (!m || !m.text) continue;
-        if (!m.fromMe) {
-          const fromUserHist = parseUserTextForName(m.text);
-          if (fromUserHist) return fromUserHist;
-        } else {
-          const botMatch =
-            m.text.match(/¡?[Mm]ucho gusto,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
-            m.text.match(/¡?[Qq]ué bien,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
-            m.text.match(/¡?[Pp]erfecto,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
-            m.text.match(/¡?[Gg]enial,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
-            m.text.match(/¡?[Ee]xcelente,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/);
-          if (botMatch && botMatch[1]) {
-            const v = cleanAndValidate(botMatch[1]);
-            if (v) return v;
-          }
+        if (!m || !m.text || m.fromMe) continue;
+        const fromUserHist = parseUserTextForName(m.text);
+        if (fromUserHist) return fromUserHist;
+      }
+      // 3.2 Segundo en saludos previos validados del bot
+      for (const m of conversationHistory) {
+        if (!m || !m.text || !m.fromMe) continue;
+        const botMatch =
+          m.text.match(/¡?[Mm]ucho gusto,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
+          m.text.match(/¡?[Qq]ué bien,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
+          m.text.match(/¡?[Pp]erfecto,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
+          m.text.match(/¡?[Gg]enial,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/) ||
+          m.text.match(/¡?[Ee]xcelente,?\s+([A-Za-zÁ-ÿ]+)[!.,]?/);
+        if (botMatch && botMatch[1]) {
+          const v = this.cleanAndValidateCandidateName(botMatch[1]);
+          if (v) return v;
         }
       }
     }
@@ -583,11 +597,12 @@ Los mensajes de los pasos conversacionales son PLANTILLAS OFICIALES APROBADAS PO
     if (
       candidateName === 'linda' &&
       nameMatchDirect &&
-      nameMatchDirect[1] &&
-      !['hermosa', 'princesa', 'linda', 'claro', 'si', 'hola', 'nombre'].includes(nameMatchDirect[1].toLowerCase()) &&
-      !this.detectMale(nameMatchDirect[1])
+      nameMatchDirect[1]
     ) {
-      candidateName = nameMatchDirect[1];
+      const validatedDirect = this.cleanAndValidateCandidateName(nameMatchDirect[1]);
+      if (validatedDirect) {
+        candidateName = validatedDirect;
+      }
     }
 
     // Blindaje 0: CERO PLACEHOLDERS LITERALES ([Nombre], [Edad], [Sector], etc.)
@@ -597,6 +612,21 @@ Los mensajes de los pasos conversacionales son PLANTILLAS OFICIALES APROBADAS PO
     reply = reply.replace(/\{\s*(?:nombre|name|candidata)(?:\s*\/[^\}]*)?\s*\}/gi, candidateName);
     reply = reply.replace(/\[\s*edad\s*\]/gi, 'tus');
     reply = reply.replace(/\[\s*sector\s*\]/gi, 'Tu sector');
+
+    // Blindaje 0.05: Blindaje Anti-Risas / Anti-Blacklist en saludos generados (ej: "Mucho gusto, Jaja", "¡Qué bien, Jaja!", "Mucho gusto, System!")
+    reply = reply.replace(/(¡?[Qq]ué bien|¡?[Mm]ucho gusto|¡?[Pp]erfecto|¡?[Gg]enial|¡?[Ee]xcelente),?\s+([A-Za-zÁ-ÿ]+)([!.,]?)/gi, (match, prefix, greetedWord, punct) => {
+      const valid = this.cleanAndValidateCandidateName(greetedWord);
+      if (!valid) {
+        if (candidateName && candidateName !== 'linda') {
+          return `${prefix}, ${candidateName}${punct || '!'}`;
+        }
+        return `¡Hola${punct || '!'}`;
+      }
+      if (candidateName && candidateName !== 'linda' && valid.toLowerCase() !== candidateName.toLowerCase()) {
+        return `${prefix}, ${candidateName}${punct || '!'}`;
+      }
+      return match;
+    });
 
     // Blindaje 0.1: PROHIBICIÓN TOTAL DE LA FRASE "no es negociable"
     reply = reply.replace(/\s*y\s+\*{0,2}no\s+es\s+negociable\*{0,2},?/gi, '');
@@ -613,9 +643,8 @@ Los mensajes de los pasos conversacionales son PLANTILLAS OFICIALES APROBADAS PO
       }
     }
 
-    // Blindaje 1: Si es el primer mensaje y la IA por red devolvió un saludo incompleto
-    if (!hasBotSpoken && reply.startsWith('¡Hola!') && reply.length < 90) {
-      console.warn('[AIAgent] Se detectó saludo inicial truncado. Restableciendo saludo oficial completo.');
+    // Blindaje 1: Si es el primer mensaje y no hay nombre extraído aún, forzar saludo oficial Paso 1
+    if (!hasBotSpoken && candidateName === 'linda') {
       reply = '¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️';
     }
 
