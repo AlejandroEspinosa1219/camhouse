@@ -140,7 +140,11 @@ class WhatsAppManager {
           keys: makeCacheableSignalKeyStore(state.keys, logger)
         },
         syncFullHistory: false,
-        browser: ['CamHouse By C&A', 'Chrome', '1.0.0'],
+        shouldSyncHistoryMessage: () => false,
+        browser: Browsers.ubuntu('Chrome'),
+        markOnlineOnConnect: true,
+        connectTimeoutMs: 60000,
+        keepAliveIntervalMs: 25000,
         generateHighQualityLinkPreview: false,
         getMessage: async (key) => {
           const chat = storage.getChat(lineKey, key.remoteJid);
