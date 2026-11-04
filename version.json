@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.1.0 — Motor IA Élite: Eliminación de secuestros de texto, escucha activa con respuestas naturales y resolución de dudas sin saltos forzados a fotos."
+  "changelog": "Versión 1.1.1 — Candado de género y protección geográfica inteligente: San Félix y barrios de Antioquia reconocidos como ubicaciones."
 }

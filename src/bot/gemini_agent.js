@@ -395,7 +395,13 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
     const cleanLower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     if (!cleanLower) return null;
 
-    // 1. Descartar si el mensaje habla de convivencia con familiares ("vivo con mi papa", "mi esposo", etc.)
+    // 1. Descartar si el texto es una ubicación, barrio, vereda o corregimiento (ej: "San Félix", "San Cristóbal", "Barrio San Javier", etc.)
+    const placePattern = /\b(?:san|santa|santo|vereda|barrio|sector|corregimiento|comuna|calle|carrera|cra|diagonal|diag|transversal|transv)\s+[a-záéíóúñ]+/i;
+    if (placePattern.test(cleanLower)) {
+      return null;
+    }
+
+    // 1.1 Descartar si el mensaje habla de convivencia con familiares ("vivo con mi papa", "mi esposo", etc.)
     const relativePattern = /\b(?:vivo con|con mi|esposo|novio|pareja|padre|papa|papá|hermano|hijo|primo|tio|tío|amigo)\b/i;
     if (relativePattern.test(text) && (cleanLower.includes('vivo con') || cleanLower.includes('con mi'))) {
       return null;
@@ -576,19 +582,30 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       };
     }
 
-    // 2. Detección de aspirante hombre (postulación exclusiva para mujeres)
-    let detectedMaleName = this.detectMale(userMessage);
+    // 2. Detección de aspirante hombre (postulación exclusiva para mujeres) con Candado de Género
+    const hasConfirmedFemale = (candidateName && candidateName !== 'linda' && candidateName !== 'hermosa') || this.hasRealPhotoInConversation(userMessage, conversationHistory);
 
-    // Si no está en el mensaje actual, revisar si en el historial el usuario se presentó como hombre
-    if (!detectedMaleName && Array.isArray(conversationHistory)) {
-      for (const m of conversationHistory) {
-        if (!m.fromMe && m.text) {
-          const maleInPast = this.detectMale(m.text);
-          if (maleInPast) {
-            detectedMaleName = maleInPast;
-            break;
+    let detectedMaleName = null;
+    if (!hasConfirmedFemale) {
+      detectedMaleName = this.detectMale(userMessage);
+
+      // Si no está en el mensaje actual, revisar si en el historial el usuario se presentó como hombre
+      if (!detectedMaleName && Array.isArray(conversationHistory)) {
+        for (const m of conversationHistory) {
+          if (!m.fromMe && m.text) {
+            const maleInPast = this.detectMale(m.text);
+            if (maleInPast) {
+              detectedMaleName = maleInPast;
+              break;
+            }
           }
         }
+      }
+    } else {
+      // Si la candidata ya es mujer confirmada con fotos o nombre verificado, solo detectar si escribe explícitamente "soy un hombre"
+      const explicitMale = /\b(?:soy|yo soy)\s+(?:un\s+)?(?:hombre|varon|chico|masculino)\b/i;
+      if (explicitMale.test(userMessage || '')) {
+        detectedMaleName = 'amigo';
       }
     }
 
@@ -627,7 +644,7 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
     }
 
     // 2.6 Detección de ubicación genérica ("Desde Colombia") o ciudades fuera de cobertura de Medellín y Área Metropolitana
-    const medellinAreas = /\b(?:medellin|bello|envigado|itagui|sabaneta|estrella|la estrella|copacabana|girardota|caldas|antioquia|castilla|belen|poblado|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san antonio de prado|altavista|san cristobal)\b/i;
+    const medellinAreas = /\b(?:medellin|bello|envigado|itagui|sabaneta|estrella|la estrella|copacabana|girardota|caldas|antioquia|castilla|belen|poblado|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san antonio de prado|san antonio|altavista|san cristobal|san felix|sanfelix|santa elena|san diego|san lucas|san joaquin)\b/i;
     const outOfCoverageCities = /\b(?:bogota|cali|barranquilla|cartagena|bucaramanga|cucuta|pereira|manizales|armenia|santa marta|ibague|pasto|monteria|villavicencio|neiva|valledupar|popayan|sincelejo|tunja|riohacha|quibdo|yopal|florencia|palmira|buenaventura|soacha|tulua|buga|cartago|sogamoso|duitama|barrancabermeja|girardot|dosquebradas|envigado_no)\b/i;
 
     if (outOfCoverageCities.test(lowerUserMsg) && !medellinAreas.test(lowerUserMsg)) {
