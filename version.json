@@ -1,7 +1,7 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.0.3 — Protocolo WhatsApp Web Live, firma oficial Google Chrome y limpieza profunda de sesión."
+  "changelog": "Versión 1.0.4 — Vinculación ultra-rápida (omite transferencia pesada de historial en el celular)."
 }

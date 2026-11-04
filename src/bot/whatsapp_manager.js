@@ -150,6 +150,7 @@ class WhatsAppManager {
           keys: makeCacheableSignalKeyStore(state.keys, logger)
         },
         syncFullHistory: false,
+        shouldSyncHistoryMessage: () => false,
         browser: Browsers.windows('Chrome'),
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
