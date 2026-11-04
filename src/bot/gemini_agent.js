@@ -121,10 +121,13 @@ class AIAgent {
     // Regex para risas, onomatopeyas y afirmaciones/negaciones repetidas (ej: 'jaja', 'jeje', 'jajaja', 'sii', 'noo', 'xd', 'lol')
     if (/^(s+i+|n+o+|j+[aeiou]+|h+[aeiou]+|x+d+|l+o+l+|a+y+|u+y+)$/i.test(lower)) return null;
 
+    // Saludos informales y variaciones (ej: 'hols', 'holis', 'holi', 'hola', 'holaa', 'ola', 'buenas', 'buenass', 'wenas', 'hey', 'hello', 'hi')
+    if (/^(h+o+l+[aeios]*|o+l+[as]*|b+u+e+n+[as]*|w+e+n+a+s*|h+e+y+|h+e+l+l+o+|h+i+)$/i.test(lower)) return null;
+
     const blacklist = new Set([
       'hermosa', 'princesa', 'linda', 'reina', 'corazon', 'bella', 'amiga', 'querida', 'amor',
       'claro', 'si', 'sí', 'sii', 'siii', 'sip', 'sipi', 'sep', 'nop', 'nopi', 'nooo', 'noooo',
-      'hola', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'saludos',
+      'hola', 'buenas', 'buenos', 'dias', 'tardes', 'noches', 'saludos', 'saludo',
       'gracias', 'muchas', 'mil', 'colombia', 'medellin', 'bello', 'envigado', 'itagui',
       'sabaneta', 'castilla', 'belen', 'poblado', 'laureles', 'robledo', 'manrique', 'aranjuez',
       'copacabana', 'girardota', 'caldas', 'estrella', 'bogota', 'cali', 'barranquilla',
@@ -133,11 +136,13 @@ class AIAgent {
       'vivo', 'desde', 'para', 'con', 'por', 'que', 'como', 'donde', 'cuanto', 'quien', 'cual',
       'todo', 'bien', 'super', 'excelente', 'perfecto', 'genial', 'entendido', 'listo', 'dale',
       'ok', 'okay', 'oki', 'okey', 'vale', 'mujer', 'chica', 'aspirante', 'usuario', 'cliente',
-      'nombre', 'edad', 'sector', 'ciudad', 'barrio', 'parte', 'informacion', 'info',
-      'interesa', 'interesada', 'quiero', 'postulacion', 'oferta', 'trabajo', 'empleo',
+      'nombre', 'edad', 'sector', 'ciudad', 'barrio', 'parte', 'informacion', 'info', 'informes',
+      'interesa', 'interesada', 'interesado', 'quiero', 'postulacion', 'postularme', 'oferta', 'trabajo', 'empleo', 'vacante', 'vacantes',
       'tiempo', 'disponibilidad', 'sola', 'pareja', 'system', 'notify', 'bot', 'admin',
       'soporte', 'servicio', 'store', 'tienda', 'bunker', 'android', 'iphone', 'contacto',
-      'whatsapp', 'interes', 'postularme', 'jaja', 'jeje', 'jiji', 'jojo', 'jajaja', 'jejeje',
+      'whatsapp', 'interes', 'requisitos', 'anuncio', 'tiktok', 'instagram', 'facebook',
+      'pregunta', 'duda', 'dudita', 'asesora', 'coordinador',
+      'jaja', 'jeje', 'jiji', 'jojo', 'jajaja', 'jejeje',
       'jajajaja', 'jejejeje', 'jajajajaja', 'haha', 'hahaha', 'xd', 'lol', 'tambien', 'tambn',
       'tbn', 'obvio', 'seguro', 'verdad', 'exacto', 'correcto', 'entonces', 'pues', 'bueno',
       'mira', 'oye', 'bebe', 'bb', 'porfa', 'porfavor', 'favor', 'uno', 'una', 'unas', 'unos',
@@ -154,11 +159,10 @@ class AIAgent {
     const parseUserTextForName = (txt) => {
       if (!txt || typeof txt !== 'string') return null;
       const patterns = [
-        /(?:me llamo|mi nombre es|soy|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i,
+        /(?:me llamo|mi nombre es|soy|yo soy|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i,
         /(?:^|\n)\s*([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+(?:tengo\s+)?\d{2}\s*(?:años|anos)?/i,
         /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/i,
-        /(?:^|\n)\s*hola[,.\s]+(?:soy\s+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i,
-        /^(?:hola[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})[!.]*$/i
+        /(?:^|\n)\s*hola[,.\s]+(?:soy|me llamo)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i
       ];
       for (const regex of patterns) {
         const m = txt.trim().match(regex);
@@ -377,7 +381,7 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 * **Paso 1: Saludo de Bienvenida:**
   "¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️"
 * **Paso 2: Cero Inversión y Edad (Rango 22 a 40 años):**
-  Salúdala por su nombre, recálcale que no debe invertir un solo peso y pregúntale su edad.
+  Si ya sabes su nombre, salúdala por su nombre; si aún no te ha dicho su nombre, pregúntaselo con cariño junto con su edad. Recálcale con tranquilidad que aquí no debe invertir ni un solo peso y que le prestamos todos los equipos profesionales.
 * **Paso 3: Motivación:**
   Si cumple con la edad (22-40), felicítala y pregúntale qué la motivó a querer trabajar desde casa como modelo.
 * **Paso 4: Espacio Privado y Validación de Convivencia:**

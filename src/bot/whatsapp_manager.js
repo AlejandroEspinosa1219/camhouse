@@ -399,53 +399,11 @@ class WhatsAppManager {
   }
 
   // Detector auxiliar de nombres para actualizar la ficha de contacto
-  extractPotentialName(text) {
+  extractPotentialName(text, history = []) {
     if (!text || typeof text !== 'string') return null;
-    const clean = text.trim();
-    const blacklist = [
-      'bien', 'interesada', 'modelo', 'modleo', 'mujer', 'chica', 'amiga', 'nueva', 'candidata', 
-      'buena', 'hola', 'aqui', 'que', 'es', 'que es', 'como', 'cuando', 'donde', 'por', 'porque', 
-      'para', 'una', 'un', 'el', 'la', 'los', 'las', 'de', 'del', 'con', 'webcam', 'si', 'no', 'claro',
-      'gracias', 'ok', 'dale', 'quiero', 'estafa', 'dinero', 'info', 'informacion', 'desde', 'colombia',
-      'buenos', 'dias', 'buenas', 'tardes', 'noches', 'muchas', 'medellin', 'bogota', 'cali', 'bello',
-      'envigado', 'itagui', 'sabaneta', 'castilla', 'belen', 'poblado', 'laureles', 'robledo'
-    ];
-
-    // Caso 0: "Carolina 37 años", "Valentina 24 años", "Carolina 37"
-    const mAge = clean.match(/^([A-ZÁÉÍÓÚÑa-záéíóúñ]{3,20})[\s,]+\d{2}\s*(?:a[ñn]os)?\b/i);
-    if (mAge && mAge[1]) {
-      const candidate = mAge[1].trim();
-      if (!blacklist.includes(candidate.toLowerCase())) {
-        return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
-      }
-    }
-
-    // Caso 1: "Manuela me llamo", "Sofia me llamo" (nombre antes de "me llamo")
-    const mPre = clean.match(/^([A-ZÁÉÍÓÚÑa-záéíóúñ]{2,20})\s+me llamo/i);
-    if (mPre && mPre[1]) {
-      const candidate = mPre[1].trim();
-      if (!blacklist.includes(candidate.toLowerCase())) {
-        return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
-      }
-    }
-    
-    // Caso 2: "Me llamo Laura", "Mi nombre es Laura Gómez", "Soy Laura", "Yo soy Laura"
-    const m1 = clean.match(/(?:me llamo|mi nombre es|soy|yo soy)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)/i);
-    if (m1 && m1[1]) {
-      const candidate = m1[1].trim();
-      const firstWord = candidate.split(/\s+/)[0].toLowerCase();
-      if (!blacklist.includes(firstWord) && !blacklist.includes(candidate.toLowerCase()) && candidate.length >= 2 && candidate.length <= 30) {
-        return candidate.charAt(0).toUpperCase() + candidate.slice(1);
-      }
-    }
-    
-    // Caso 3: Si la persona solo envía una o dos palabras que corresponden a su nombre
-    const words = clean.split(/\s+/);
-    if (words.length <= 2 && /^[A-ZÁÉÍÓÚÑa-záéíóúñ]+(\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?$/.test(clean)) {
-      const anyBlacklisted = words.some(w => blacklist.includes(w.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
-      if (!anyBlacklisted && !blacklist.includes(clean.toLowerCase()) && clean.length >= 3 && clean.length <= 25) {
-        return words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-      }
+    const detected = geminiAgent.extractCandidateName(text, history);
+    if (detected && detected !== 'linda' && detected !== 'hermosa') {
+      return detected;
     }
     return null;
   }
@@ -455,7 +413,9 @@ class WhatsAppManager {
     console.log(`[WhatsAppManager] [${lineKey}] ${isVoice ? '🎙️ Audio transcrito' : (isImage ? '📸 Foto' : 'Mensaje')} de ${senderName} (${contactJid}): "${text}"`);
 
     // 1. Detectar si el mensaje incluye el nombre de la aspirante para actualizar el contacto
-    const detectedName = this.extractPotentialName(text);
+    const existingChat = storage.getChat(lineKey, contactJid);
+    const existingHistory = existingChat ? existingChat.messages : [];
+    const detectedName = this.extractPotentialName(text, existingHistory);
     if (detectedName) {
       storage.updateChatContactName(lineKey, contactJid, detectedName);
     }
