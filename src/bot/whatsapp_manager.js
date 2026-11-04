@@ -128,59 +128,33 @@ class WhatsAppManager {
 
     try {
       const { state, saveCreds } = await useMultiFileAuthState(line.folder);
-      let waVersion = [2, 3000, 1052938686];
-      try {
-        const vInfo = await fetchLatestWaWebVersion();
-        if (vInfo && vInfo.version) {
-          waVersion = vInfo.version;
-        }
-      } catch (ve) {
-        console.warn(`[WhatsAppManager] [${line.name}] No se pudo consultar versión live, usando fallback:`, ve.message);
-      }
-
+      const { version } = await fetchLatestBaileysVersion();
       const logger = pino({ level: 'silent' });
 
-      // Configuración ultra-estable para Windows: Identidad Chrome oficial y Caché de Signal Keys en RAM
       const sock = makeWASocket({
-        version: waVersion,
+        version,
         logger,
         printQRInTerminal: false,
-        auth: {
-          creds: state.creds,
-          keys: makeCacheableSignalKeyStore(state.keys, logger)
-        },
+        auth: state,
         syncFullHistory: false,
-        shouldSyncHistoryMessage: () => false,
-        browser: Browsers.windows('Chrome'),
-        connectTimeoutMs: 60000,
-        defaultQueryTimeoutMs: 60000,
-        keepAliveIntervalMs: 25000,
-        qrTimeout: 60000,
-        retryRequestDelayMs: 2000,
-        markOnlineOnConnect: true,
-        generateHighQualityLinkPreview: false,
-        getMessage: async (key) => {
-          const chat = storage.getChat(lineKey, key.remoteJid);
-          if (chat && chat.messages) {
-            const found = chat.messages.find(m => m.id === key.id);
-            if (found && found.text) {
-              return { conversation: found.text };
-            }
-          }
-          return undefined;
-        }
+        browser: ['CamHouse By C&A', 'Chrome', '1.0.0']
       });
 
       line.socket = sock;
+      line.isStarting = false;
 
-      // Evento de credenciales actualizadas
-      sock.ev.on('creds.update', saveCreds);
+      // Evento de credenciales actualizadas (serializado para garantizar escritura completa en disco antes de reconectar)
+      let credsSavePromise = Promise.resolve();
+      sock.ev.on('creds.update', () => {
+        credsSavePromise = credsSavePromise.then(() => saveCreds()).catch(() => {});
+      });
 
       // Evento de conexión con filtro anti-parpadeo y auto-reconexión robusta
       sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
+          line.isStarting = false;
           line.qr = qr;
           line.status = 'qr_ready';
           line.reconnectAttempts = 0;
@@ -201,57 +175,61 @@ class WhatsAppManager {
         }
 
         if (connection === 'close') {
+          line.isStarting = false;
           const statusCode = lastDisconnect?.error?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-          console.warn(`[WhatsAppManager] [${line.name}] Conexión cerrada. Status: ${statusCode}, Reconectar: ${shouldReconnect}`);
+          console.warn(`[WhatsAppManager] [${line.name}] Conexión cerrada. Status: ${statusCode}`);
 
-          if (shouldReconnect) {
-            line.reconnectAttempts = (line.reconnectAttempts || 0) + 1;
+          // Caso A: Reinicio de flujo requerido por WhatsApp (Status 515 restartRequired tras escanear QR)
+          if (statusCode === DisconnectReason.restartRequired) {
+            console.log(`[WhatsAppManager] [${line.name}] Completando vinculación inmediata tras escaneo QR (515)...`);
+            await credsSavePromise;
+            line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 250);
+            return;
+          }
 
-            // Caso A: Reinicio de flujo requerido por WhatsApp (Status 515 restartRequired)
-            // Esto es un refresco rutinario de sesión. Reconectar de inmediato (350ms) SIN mostrar 'Desconectado' al usuario.
-            if (statusCode === DisconnectReason.restartRequired) {
-              console.log(`[WhatsAppManager] [${line.name}] Reconexión rápida por restartRequired (515)...`);
-              line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 350);
-              return;
-            }
+          // Caso B: Sesión inválida, corrupta o cerrada desde el celular (401, 403, 405, 411, 500)
+          const isInvalidSession = (
+            statusCode === DisconnectReason.loggedOut ||
+            statusCode === DisconnectReason.badSession ||
+            statusCode === DisconnectReason.forbidden ||
+            statusCode === DisconnectReason.multideviceMismatch ||
+            statusCode === 405
+          );
 
-            // Caso B: Conexión reemplazada por otra sesión (Status 440)
-            if (statusCode === DisconnectReason.connectionReplaced) {
-              console.log(`[WhatsAppManager] [${line.name}] Conexión reemplazada (440). Esperando 5s para reconectar limpiamente...`);
-              line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 5000);
-              return;
-            }
+          line.reconnectAttempts = (line.reconnectAttempts || 0) + 1;
 
-            // Caso C: Micro-corte de red / Timeout rutinario en sesión ya vinculada
-            // Anti-Flicker: Si la sesión ya estaba vinculada (+573...), mantenemos 'connected' en la interfaz
-            // durante los primeros 3 reintentos para que el cliente no vea parpadeos en pantalla por micro-cortes de Wi-Fi.
-            const hasPhone = Boolean(line.user?.phone);
-            if (!hasPhone || line.reconnectAttempts > 3) {
-              line.status = line.qrDataUrl ? 'qr_ready' : 'connecting';
-              this.broadcastLineStatus(lineKey);
-            }
-
-            const delay = Math.min(line.reconnectAttempts * 1200, 6000);
-            console.log(`[WhatsAppManager] [${line.name}] Reintentando conexión estable en ${delay / 1000}s (intento #${line.reconnectAttempts})...`);
-            line.reconnectTimer = setTimeout(() => this.startLine(lineKey), delay);
-          } else {
-            // Desconexión definitiva solicitada desde el celular (Status 401 loggedOut)
+          if (isInvalidSession || (!line.user && hasCredsOnDisk && line.reconnectAttempts >= 2)) {
             line.status = 'disconnected';
             line.qr = null;
             line.qrDataUrl = null;
             line.user = null;
             line.reconnectAttempts = 0;
             this.broadcastLineStatus(lineKey);
-            console.log(`[WhatsAppManager] [${line.name}] Sesión cerrada desde el celular. Limpiando credenciales para nuevo QR...`);
-            try {
-              if (fs.existsSync(line.folder)) {
-                fs.rmSync(line.folder, { recursive: true, force: true });
-              }
-            } catch (e) {}
-            line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 1500);
+            console.log(`[WhatsAppManager] [${line.name}] Limpiando sesión previa incompleta/cerrada (Status: ${statusCode}) para generar QR limpio...`);
+            this.cleanFolder(line.folder);
+            line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 1000);
+            return;
           }
+
+          // Caso C: Conexión reemplazada por otra sesión (Status 440)
+          if (statusCode === DisconnectReason.connectionReplaced) {
+            console.log(`[WhatsAppManager] [${line.name}] Conexión reemplazada (440). Esperando 5s para reconectar limpiamente...`);
+            line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 5000);
+            return;
+          }
+
+          // Caso D: Micro-corte de red / Timeout rutinario
+          const hasPhone = Boolean(line.user?.phone);
+          if (!hasPhone || line.reconnectAttempts > 3) {
+            line.status = line.qrDataUrl ? 'qr_ready' : 'connecting';
+            this.broadcastLineStatus(lineKey);
+          }
+
+          const delay = Math.min(line.reconnectAttempts * 1500, 8000);
+          console.log(`[WhatsAppManager] [${line.name}] Reintentando conexión en ${delay / 1000}s (intento #${line.reconnectAttempts})...`);
+          line.reconnectTimer = setTimeout(() => this.startLine(lineKey), delay);
         } else if (connection === 'open') {
+          line.isStarting = false;
           line.reconnectAttempts = 0;
           line.status = 'connected';
           line.qr = null;
@@ -375,6 +353,8 @@ class WhatsAppManager {
       console.error(`[WhatsAppManager] Error inicializando socket para ${lineKey}:`, err);
       line.status = 'disconnected';
       this.broadcastLineStatus(lineKey);
+    } finally {
+      line.isStarting = false;
     }
   }
 

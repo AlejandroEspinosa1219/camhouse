@@ -1,7 +1,7 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.0.4 — Vinculación ultra-rápida (omite transferencia pesada de historial en el celular)."
+  "changelog": "Versión 1.0.5 — Solución definitiva al bloqueo tras escanear QR (liberación de candado 515 y conexión instantánea)."
 }
