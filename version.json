@@ -1,7 +1,7 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.0.6 — Desencriptación y respuesta inmediata de mensajes entrantes (getMessage + SignalCache)."
+  "changelog": "Versión 1.0.7 — Corrección crítica: Saludo oficial de bienvenida Paso 1 y solicitud de nombre real sin confundir nombres de perfil de WhatsApp."
 }

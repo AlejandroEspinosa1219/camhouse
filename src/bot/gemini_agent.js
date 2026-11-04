@@ -125,7 +125,9 @@ class AIAgent {
       'todo', 'bien', 'super', 'excelente', 'perfecto', 'genial', 'entendido', 'listo', 'dale',
       'ok', 'mujer', 'chica', 'aspirante', 'usuario', 'cliente', 'nombre', 'edad', 'sector',
       'ciudad', 'barrio', 'parte', 'informacion', 'info', 'interesa', 'interesada', 'quiero',
-      'postulacion', 'oferta', 'trabajo', 'empleo', 'tiempo', 'disponibilidad', 'sola', 'pareja'
+      'postulacion', 'oferta', 'trabajo', 'empleo', 'tiempo', 'disponibilidad', 'sola', 'pareja',
+      'system', 'notify', 'bot', 'admin', 'soporte', 'servicio', 'store', 'tienda', 'bunker',
+      'android', 'iphone', 'contacto', 'whatsapp', 'interes', 'postularme'
     ]);
 
     const cleanAndValidate = (raw) => {
@@ -138,30 +140,13 @@ class AIAgent {
       return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
     };
 
-    // 1. Nombre ya registrado en el chat (knownName de storage/WhatsApp)
-    if (knownName && typeof knownName === 'string') {
-      const trimmedKnown = knownName.trim();
-      if (
-        trimmedKnown &&
-        !trimmedKnown.startsWith('Aspirante') &&
-        !trimmedKnown.startsWith('Usuario') &&
-        !trimmedKnown.startsWith('+') &&
-        !/^\d/.test(trimmedKnown) &&
-        !trimmedKnown.includes('@')
-      ) {
-        const parts = trimmedKnown.split(/\s+/);
-        const validKnown = cleanAndValidate(parts[0]);
-        if (validKnown) return validKnown;
-      }
-    }
-
-    // 2. Buscar en el mensaje actual del usuario patrones explícitos ("Soy X", "Me llamo X", "Carolina 37 años")
     const parseUserTextForName = (txt) => {
       if (!txt || typeof txt !== 'string') return null;
       const patterns = [
         /(?:me llamo|mi nombre es|soy|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i,
         /(?:^|\n)\s*([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+(?:tengo\s+)?\d{2}\s*(?:años|anos)?/i,
-        /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/i
+        /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/i,
+        /(?:^|\n)\s*hola[,.\s]+(?:soy\s+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i
       ];
       for (const regex of patterns) {
         const m = txt.match(regex);
@@ -173,10 +158,26 @@ class AIAgent {
       return null;
     };
 
+    // 1. Buscar en el mensaje actual del usuario lo que ella escribió explícitamente
     const fromCurrentMsg = parseUserTextForName(userMessage);
     if (fromCurrentMsg) return fromCurrentMsg;
 
-    // 3. Buscar en el historial (mensajes previos de la candidata o saludos del bot)
+    // 2. Si el último mensaje del bot le preguntó el nombre y el usuario respondió
+    if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      const lastBotMsg = [...conversationHistory].reverse().find(m => m && m.fromMe);
+      if (lastBotMsg && lastBotMsg.text) {
+        const askedForName = /(?:tu nombre|te llamas|como es tu nombre|tu nombre completo)/i.test(lastBotMsg.text);
+        if (askedForName) {
+          const words = (userMessage || '').trim().split(/\s+/).map(w => w.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ]/g, ''));
+          for (let i = words.length - 1; i >= 0; i--) {
+            const v = cleanAndValidate(words[i]);
+            if (v) return v;
+          }
+        }
+      }
+    }
+
+    // 3. Buscar en el historial previo de mensajes de la candidata
     if (Array.isArray(conversationHistory)) {
       for (const m of conversationHistory) {
         if (!m || !m.text) continue;
