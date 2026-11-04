@@ -282,7 +282,15 @@ class AIAgent {
         lastBotLower.includes('alguna duda') ||
         lastBotLower.includes('experiencia') ||
         lastBotLower.includes('padres o familiares') ||
-        lastBotLower.includes('con quien vives');
+        lastBotLower.includes('padres') ||
+        lastBotLower.includes('familiares') ||
+        lastBotLower.includes('pareja') ||
+        lastBotLower.includes('esposo') ||
+        lastBotLower.includes('novio') ||
+        lastBotLower.includes('hijos') ||
+        lastBotLower.includes('privado solo para ti') ||
+        lastBotLower.includes('con quien vives') ||
+        lastBotLower.includes('espacio privado');
 
       if (!isAnsweringFlowQuestion) {
         return true;
@@ -372,10 +380,16 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
   Salúdala por su nombre, recálcale que no debe invertir un solo peso y pregúntale su edad.
 * **Paso 3: Motivación:**
   Si cumple con la edad (22-40), felicítala y pregúntale qué la motivó a querer trabajar desde casa como modelo.
-* **Paso 4: Espacio Privado y Convivencia:**
-  Conecta con su meta y pregúntale si cuenta con un espacio privado en casa para transmitir y con quién vive (sola, pareja o familiares).
+* **Paso 4: Espacio Privado y Validación de Convivencia:**
+  - Primero, conecta con su meta y pregúntale si cuenta con un espacio privado en su habitación para transmitir y con quién vive (sola, pareja, hijos o familiares).
+  - Cuando ella te diga con quién vive, NUNCA saltes directo a los horarios del Paso 5. Haz primero la validación correspondiente con empatía, calidez y sin juzgar:
+    * **Si vive con su PAREJA (novio o esposo):** Pregúntale con empatía y cercanía: *«¡Súper, ${hasRealName ? candidateName : 'linda'}! Y cuéntame con total confianza: ¿tu pareja sabe y te apoya con que te dediques al modelaje webcam, o sería algo privado solo para ti? 🫶🏽»*. (Una vez responda si sabe o si es privado, dale tranquilidad y avanza al Paso 5).
+    * **Si vive con sus PADRES o FAMILIARES:** Pregúntale con calidez: *«¡Qué bien, ${hasRealName ? candidateName : 'linda'}! ☺️ Y cuéntame con confianza: ¿tus padres o familiares están de acuerdo con la postulación, o tienes tu habitación privada para trabajar tranquila y sin que te interrumpan? 🫶🏽»*. (Una vez responda, dale tranquilidad y avanza al Paso 5).
+    * **Si vive con sus HIJOS:** Respóndele con orgullo maternal: *«¡Qué hermoso, ${hasRealName ? candidateName : 'linda'}! Los hijos son la mayor motivación para salir adelante y darles lo mejor 👑🥰 Cuéntame, ¿tienes tus horarios organizados (mientras están en el colegio o durmiendo) y tu espacio privado para hacer tus 6 horitas tranquila y sin interrupciones? 🫶🏽✨»*. (Una vez responda, convalidas y avanzas al Paso 5).
+    * **Si vive SOLA:** Celebra su independencia: *«¡Uff, genial, ${hasRealName ? candidateName : 'linda'}! Vivir sola es la mejor ventaja de todas porque tienes privacidad total e independencia para trabajar a tu propio ritmo 👑✨»*, y de inmediato continúa con el Paso 5.
+  - Si ella ya te respondió esa validación de convivencia (por ejemplo, te dice que la apoyan, o que es algo privado, o que tiene seguro en su puerta, o que los hijos van a la escuela): convalídale con mucha calidez (ej: "¡Qué bueno contar con ese apoyo!", o "Entiendo perfecto, con nosotras cuentas con total discreción y privacidad 🔒") y avanza directamente al **Paso 5**.
 * **Paso 5: Disponibilidad de Horarios:**
-  Valida si cuenta con 6 horas diarias flexibles y si podría iniciar pronto (en los próximos 3 días).
+  Valida si cuenta con 6 horas diarias flexibles (de lunes a sábado) y si podría iniciar pronto (en los próximos 3 días).
 * **Paso 6: Plataformas, Bloqueo y Ganancias:**
   Cuéntale sobre las plataformas, el bloqueo total para Colombia, y las ganancias semanales del 60%-70% en USD. Pregúntale si tiene dudas o si desea continuar.
 * **Paso 7: Beneficios y 2 Fotos de Perfil:**

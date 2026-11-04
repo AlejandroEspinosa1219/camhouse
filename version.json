@@ -1,7 +1,7 @@
 {
-  "version": "1.1.2",
+  "version": "1.1.3",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.1.2 — Recomendación oficial estrella del turno nocturno (8:00 p.m. / 9:00 p.m.) y ajuste de horarios."
+  "changelog": "Versión 1.1.3 — Validación personalizada y empática de convivencia en Paso 4 (Pareja, Padres/Familiares, Hijos, Sola) y transición suave a horarios."
 }
