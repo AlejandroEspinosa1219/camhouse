@@ -1,7 +1,7 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.0.5 — Solución definitiva al bloqueo tras escanear QR (liberación de candado 515 y conexión instantánea)."
+  "changelog": "Versión 1.0.6 — Desencriptación y respuesta inmediata de mensajes entrantes (getMessage + SignalCache)."
 }

@@ -135,9 +135,23 @@ class WhatsAppManager {
         version,
         logger,
         printQRInTerminal: false,
-        auth: state,
+        auth: {
+          creds: state.creds,
+          keys: makeCacheableSignalKeyStore(state.keys, logger)
+        },
         syncFullHistory: false,
-        browser: ['CamHouse By C&A', 'Chrome', '1.0.0']
+        browser: ['CamHouse By C&A', 'Chrome', '1.0.0'],
+        generateHighQualityLinkPreview: false,
+        getMessage: async (key) => {
+          const chat = storage.getChat(lineKey, key.remoteJid);
+          if (chat && chat.messages) {
+            const found = chat.messages.find(m => m.id === key.id);
+            if (found && found.text) {
+              return { conversation: found.text };
+            }
+          }
+          return { conversation: 'Hola' };
+        }
       });
 
       line.socket = sock;
@@ -246,13 +260,14 @@ class WhatsAppManager {
 
       // Evento de mensajes entrantes
       sock.ev.on('messages.upsert', async (m) => {
-        if (m.type !== 'notify') return;
+        if (!m.messages || m.messages.length === 0) return;
+        if (m.type !== 'notify' && m.type !== 'append') return;
 
         for (const msg of m.messages) {
           if (!msg.message) continue;
 
           const remoteJid = msg.key.remoteJid;
-          if (!remoteJid || remoteJid.endsWith('@g.us') || remoteJid === 'status@broadcast') continue;
+          if (!remoteJid || remoteJid.endsWith('@g.us') || remoteJid === 'status@broadcast' || remoteJid.endsWith('@newsletter')) continue;
 
           // Si el mensaje fue enviado desde nuestro propio WhatsApp (por un asesor humano en el celular/Web),
           // lo guardamos en el historial para que la IA tenga contexto de lo que el asesor ya preguntó.
@@ -264,7 +279,7 @@ class WhatsAppManager {
             const rawOut = normalizeMessageContent(msg.message) || msg.message;
             const outText = (rawOut.conversation || rawOut.extendedTextMessage?.text || '').trim();
             if (outText) {
-              storage.addMessage(lineKey, remoteJid, {
+              const { chat, message } = storage.addMessage(lineKey, remoteJid, {
                 id: msg.key.id,
                 fromMe: true,
                 sender: 'Asesor CamHouse',
@@ -272,6 +287,20 @@ class WhatsAppManager {
                 timestamp: new Date().toISOString(),
                 isAI: false
               });
+              if (this.io && chat) {
+                this.io.emit('new_message', {
+                  line: lineKey,
+                  chatId: remoteJid,
+                  message: message,
+                  chatMeta: {
+                    name: chat.name,
+                    phone: chat.phone,
+                    status: chat.status,
+                    ai_mode: chat.ai_mode,
+                    requires_human: chat.requires_human
+                  }
+                });
+              }
             }
             continue;
           }
@@ -279,7 +308,10 @@ class WhatsAppManager {
           const senderName = msg.pushName || 'Contacto WhatsApp';
           
           // Desempaquetar contenido de mensaje sin importar envoltorios de WhatsApp
-          const raw = normalizeMessageContent(msg.message) || msg.message;
+          let raw = normalizeMessageContent(msg.message) || msg.message;
+          if (raw.ephemeralMessage?.message) raw = normalizeMessageContent(raw.ephemeralMessage.message) || raw.ephemeralMessage.message;
+          if (raw.viewOnceMessage?.message) raw = normalizeMessageContent(raw.viewOnceMessage.message) || raw.viewOnceMessage.message;
+
           let text = '';
           let isVoice = false;
           let isImage = false;
@@ -289,6 +321,10 @@ class WhatsAppManager {
             text = raw.conversation;
           } else if (raw.extendedTextMessage?.text) {
             text = raw.extendedTextMessage.text;
+          } else if (raw.buttonsResponseMessage?.selectedDisplayText) {
+            text = raw.buttonsResponseMessage.selectedDisplayText;
+          } else if (raw.listResponseMessage?.title) {
+            text = raw.listResponseMessage.title;
           }
 
           // 2. 📸 Detección universal de fotos (imageMessage, albumMessage, documentMessage de tipo imagen o wrappers)
