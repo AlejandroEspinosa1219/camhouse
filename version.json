@@ -1,7 +1,7 @@
 {
-  "version": "1.1.1",
+  "version": "1.1.2",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-03",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.1.1 — Candado de género y protección geográfica inteligente: San Félix y barrios de Antioquia reconocidos como ubicaciones."
+  "changelog": "Versión 1.1.2 — Recomendación oficial estrella del turno nocturno (8:00 p.m. / 9:00 p.m.) y ajuste de horarios."
 }
