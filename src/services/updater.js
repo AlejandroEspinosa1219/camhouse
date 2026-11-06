@@ -41,47 +41,64 @@ class UpdaterService {
 
   async checkForUpdates() {
     const local = this.getLocalVersion();
-    const rawUrl = `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/${this.branch}/version.json?t=${Date.now()}`;
+    let remote = null;
 
+    // 1. Intentar primero con la API de GitHub (evita el caché de 5 minutos de Fastly CDN en raw.githubusercontent.com)
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 7000);
-
-      const res = await fetch(rawUrl, {
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const apiRes = await fetch(`https://api.github.com/repos/${this.repoOwner}/${this.repoName}/contents/version.json?ref=${this.branch}`, {
         headers: { 'User-Agent': 'CamHouse-Updater-Service' },
         signal: controller.signal
       });
       clearTimeout(timeout);
-
-      if (!res.ok) {
-        return {
-          success: false,
-          updateAvailable: false,
-          currentVersion: local.version,
-          error: `GitHub devolvió status ${res.status}`
-        };
+      if (apiRes.ok) {
+        const apiData = await apiRes.json();
+        if (apiData && apiData.content) {
+          const decoded = Buffer.from(apiData.content, 'base64').toString('utf8');
+          remote = JSON.parse(decoded);
+        }
       }
+    } catch (_) {}
 
-      const remote = await res.json();
-      const hasUpdate = this.isNewer(local.version, remote.version);
+    // 2. Si falló la API por rate limit o timeout, fallback a raw.githubusercontent.com
+    if (!remote) {
+      const rawUrl = `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/${this.branch}/version.json?t=${Date.now()}`;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch(rawUrl, {
+          headers: { 'User-Agent': 'CamHouse-Updater-Service' },
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        if (res.ok) {
+          remote = await res.json();
+        }
+      } catch (err) {
+        console.warn('[Updater] No se pudo verificar actualización en GitHub:', err.message);
+      }
+    }
 
-      return {
-        success: true,
-        updateAvailable: hasUpdate,
-        currentVersion: local.version,
-        latestVersion: remote.version,
-        changelog: remote.changelog || 'Mejoras y correcciones oficiales.',
-        releaseDate: remote.releaseDate || new Date().toISOString().split('T')[0]
-      };
-    } catch (err) {
-      console.warn('[Updater] No se pudo verificar actualización en GitHub:', err.message);
+    if (!remote) {
       return {
         success: false,
         updateAvailable: false,
         currentVersion: local.version,
-        error: err.message
+        error: 'No se pudo contactar los servidores de actualización de GitHub.'
       };
     }
+
+    const hasUpdate = this.isNewer(local.version, remote.version);
+
+    return {
+      success: true,
+      updateAvailable: hasUpdate,
+      currentVersion: local.version,
+      latestVersion: remote.version,
+      changelog: remote.changelog || 'Mejoras y correcciones oficiales.',
+      releaseDate: remote.releaseDate || new Date().toISOString().split('T')[0]
+    };
   }
 
   async downloadAndApplyUpdate() {
