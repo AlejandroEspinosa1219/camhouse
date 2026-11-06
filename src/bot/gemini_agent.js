@@ -443,7 +443,12 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 ---
 
 ### REGLAS DE SEGURIDAD INDISPENSABLES:
-1. **Exclusivo para Mujeres:** Si detectas que quien escribe es un hombre, despídete de manera cordial y formal indicando que la vacante está dirigida exclusivamente a mujeres.
+1. **FILTRO ESTRICTO DE GÉNERO (VACANTE EXCLUSIVAMENTE PARA MUJERES):**
+   Esta postulación de modelaje webcam está dirigida 100% y de manera exclusiva a mujeres mayores de edad.
+   Si quien escribe es un hombre, indica un nombre típicamente masculino (ej. Jesús, Juan, Carlos, etc.) o se refiere a sí mismo como hombre:
+   Debes responder INMEDIATAMENTE y únicamente con el rechazo oficial respetuoso:
+   "Hola, [Nombre/amigo]. Agradecemos sinceramente tu interés en CamHouse By C&A. Sin embargo, te informamos de manera muy respetuosa que esta postulación de modelaje webcam está dirigida exclusivamente a mujeres, por lo que en esta oportunidad no es posible continuar con tu proceso. Te deseamos muchos éxitos en tus proyectos."
+   Está TERMINANTEMENTE PROHIBIDO tratar a un hombre como mujer, decirle "interesada", "linda", "chica", o continuar con los pasos del embudo.
 2. **Cero Frase "no es negociable":** NUNCA uses esa frase.
 3. **Fidelidad al Nombre:** Recuerda que la aspirante se llama **${hasRealName ? candidateName : 'linda'}** y tú eres **Alejandra Ramírez**.`;
   }
@@ -470,6 +475,8 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
     const malePhrases = [
       /\b(?:soy|yo soy|me llamo|mi nombre es)\s+(?:un\s+)?(?:hombre|varon|varón|chico|chico trans|hombre trans|masculino|soltero|casado|paisa hombre|chico gay|man)\b/i,
       /\b(?:soy|yo soy)\s+(?:hombre|varon|varón|chico|masculino|soltero|casado|un man)\b/i,
+      /\b(?:estoy|quedo|sigo)\s+(?:muy\s+)?interesado\b/i,
+      /\binteresado\s+(?:en\s+la\s+oferta|en\s+el\s+trabajo|en\s+la\s+vacante)\b/i,
       /\b(?:siendo|para|pueden|reciben|aceptan|admiten|trabajo para|postulacion para|vacante para)\s+(?:hombres?|varones?|chicos?|man)\b/i,
       /\b(?:un\s+hombre\s+puede|hombres\s+pueden|reciben\s+hombres|aceptan\s+hombres|trabajan\s+hombres)\b/i,
       /\b(?:puedo\s+postularme\s+siendo\s+hombre|un\s+varon\s+puede|reciben\s+varones|aceptan\s+varones)\b/i,
@@ -484,27 +491,108 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 
     // 3. Diccionario exhaustivo de nombres masculinos en Colombia y Latinoamérica
     const maleNames = new Set([
-      'juan', 'carlos', 'andres', 'david', 'alejandro', 'alejo', 'alejoespinosa', 'alejito', 'daniel', 'santiago', 'mateo', 'sebastian',
-      'felipe', 'camilo', 'diego', 'jose', 'luis', 'jorge', 'pedro', 'manuel', 'mario', 'alberto',
-      'miguel', 'fernando', 'ricardo', 'esteban', 'samuel', 'kevin', 'brian', 'bryan', 'alexander',
-      'cristian', 'christian', 'gabriel', 'pablo', 'sergio', 'javier', 'victor', 'hugo', 'eduardo',
-      'rafael', 'oscar', 'rodrigo', 'cesar', 'mauricio', 'lucas', 'nicolas', 'tomas', 'simon',
-      'martin', 'adrian', 'joaquin', 'julian', 'gonzalo', 'hector', 'guillermo', 'gustavo', 'roberto',
-      'leonardo', 'raul', 'federico', 'emilio', 'ignacio', 'jhon', 'john', 'edward', 'fabian', 'alonso',
-      'ruben', 'dario', 'hernan', 'alex', 'alvaro', 'jaime', 'walter', 'wilson', 'johan', 'yohan',
-      'edwin', 'fredy', 'freddy', 'frank', 'oswaldo', 'arnaldo', 'orlando', 'alfredo', 'antonio',
-      'ramon', 'vicente', 'bernardo', 'ivan', 'boris', 'enrique', 'ernesto', 'brayan', 'brayam',
-      'maicol', 'michael', 'stiven', 'steven', 'yeison', 'yeferson', 'jefferson',
-      'marlon', 'duvan', 'yeider', 'deimer', 'yeimer', 'leandro', 'wilmer', 'wilmar', 'giovanni',
-      'geovanny', 'jhonatan', 'jonathan', 'jhony', 'johnny', 'jhonny', 'elkin', 'albeiro', 'dairo',
-      'harold', 'harol', 'nelson', 'edgar', 'edgard', 'rodolfo', 'gilberto', 'german', 'jaider',
-      'jhair', 'jordan', 'brandon', 'alexis', 'angel', 'angelo', 'antony', 'anthony', 'ronald',
-      'ronal', 'richard', 'darwin', 'derian', 'dilan', 'dylan', 'ian', 'thiago', 'tiago', 'matias',
-      'maximiliano', 'emiliano', 'isaac', 'isaias', 'elias', 'abraham', 'moises', 'israel', 'salomon',
-      'alfonso', 'gerardo', 'arturo', 'armando', 'norberto', 'humberto', 'ever', 'eder', 'elmer',
-      'marcos', 'marco', 'luciano', 'dante', 'damian', 'damiano', 'valentin', 'fausto', 'felix',
-      'fabio', 'fabricio', 'renato', 'santino', 'facundo', 'alonzo'
+      // A
+      'aaron', 'abel', 'abelardo', 'abner', 'abraham', 'adalberto', 'adolfo', 'adrian', 'agustin',
+      'alain', 'alan', 'albeiro', 'alberto', 'aldo', 'alejandro', 'alejo', 'alejoespinosa', 'alejito',
+      'alito', 'alex', 'alexander', 'alexis', 'alfonso', 'alfredo', 'alonso', 'alonzo', 'alvaro',
+      'amadeo', 'amado', 'amador', 'amando', 'ambrosio', 'amilcar', 'amos', 'ananias', 'anibal',
+      'anselmo', 'antonio', 'antony', 'anthony', 'apolo', 'aquiles', 'ariel', 'armando', 'arnaldo',
+      'arnoldo', 'artemio', 'arturo', 'atanasio', 'augusto', 'aurelio', 'axel', 'ayrton',
+      // B
+      'baldomero', 'baltazar', 'barac', 'bartolo', 'bartolome', 'basilio', 'bautista', 'benedicto',
+      'benigno', 'benito', 'benjamin', 'bernabe', 'bernardo', 'blas', 'boris', 'brandon', 'braulio',
+      'brayam', 'brayan', 'brian', 'bruno', 'bryan', 'byron',
+      // C
+      'caleb', 'camilo', 'candido', 'carlos', 'carmelo', 'casimiro', 'cayetano', 'ceferino', 'celestino',
+      'celso', 'cesar', 'christian', 'christopher', 'cipriano', 'ciro', 'claudio', 'clemente', 'conrado',
+      'constantino', 'cornelio', 'crisanto', 'crispin', 'cristian', 'cristo', 'cristobal',
+      // D
+      'dairo', 'dalmiro', 'damian', 'damiano', 'daniel', 'danilo', 'dante', 'dario', 'darwin', 'david',
+      'deimer', 'demetrio', 'denis', 'derian', 'diego', 'dilan', 'dimas', 'dionisio', 'domingo',
+      'donato', 'doroteo', 'duvan', 'dylan',
+      // E
+      'eder', 'edgar', 'edgard', 'edgardo', 'edison', 'edmundo', 'eduardo', 'edward', 'edwin',
+      'efrain', 'eladio', 'eleazar', 'elias', 'eliecer', 'eligio', 'eliseo', 'elkin', 'elmer',
+      'eloy', 'emanuel', 'emiliano', 'emilio', 'enmanuel', 'enoc', 'enrique', 'epifanio', 'erasmo',
+      'eric', 'erick', 'erik', 'ernesto', 'esteban', 'eugenio', 'eusebio', 'eustaquio', 'evaristo',
+      'ever', 'everardo', 'ezequiel',
+      // F
+      'fabian', 'fabio', 'fabricio', 'facundo', 'faustino', 'fausto', 'federico', 'feliciano',
+      'felipe', 'felix', 'fermin', 'fernando', 'fidel', 'florencio', 'florentino', 'fortunato',
+      'francisco', 'franco', 'frank', 'franklin', 'freddy', 'fredy', 'froilan', 'fulgencio',
+      // G
+      'gabriel', 'gael', 'gaspar', 'gaston', 'genaro', 'geovanny', 'gerardo', 'german', 'gerson',
+      'gervasio', 'giancarlo', 'gil', 'gilberto', 'giovanni', 'godofredo', 'gonzalo', 'gregorio',
+      'guido', 'guillermo', 'gustavo',
+      // H
+      'harol', 'harold', 'hector', 'heliodoro', 'heraclio', 'heriberto', 'herman', 'hermenegildo',
+      'hermes', 'herminio', 'hernan', 'hernando', 'hilario', 'hipolito', 'homero', 'horacio',
+      'hugo', 'humberto',
+      // I
+      'ian', 'ibrahim', 'ignacio', 'igor', 'ildefonso', 'inigo', 'inocencio', 'isaac', 'isaias',
+      'isidoro', 'isidro', 'ismael', 'israel', 'ivan',
+      // J
+      'jacinto', 'jacobo', 'jader', 'jaider', 'jaime', 'jair', 'jairo', 'javier', 'jean', 'jefferson',
+      'jeison', 'jeremias', 'jeremy', 'jeronimo', 'jesus', 'jesús', 'jhair', 'jhon', 'jhonatan',
+      'jhonny', 'jhony', 'joaquin', 'joel', 'johan', 'john', 'johnny', 'jonas', 'jonathan', 'jordan',
+      'jorge', 'jose', 'joseph', 'joshua', 'josue', 'juan', 'judas', 'julian', 'julio', 'justino',
+      'justo', 'juvenal',
+      // K
+      'kevin',
+      // L
+      'ladislao', 'laureano', 'lazaro', 'leandro', 'leocadio', 'leon', 'leonardo', 'leoncio',
+      'leonel', 'leopoldo', 'lino', 'lisandro', 'lorenzo', 'lucas', 'luciano', 'lucio', 'luis',
+      // M
+      'macario', 'maicol', 'manuel', 'marcelino', 'marcelo', 'marcial', 'marco', 'marcos',
+      'mariano', 'marino', 'mario', 'marlon', 'martin', 'mateo', 'matias', 'mauricio', 'mauro',
+      'maximiano', 'maximiliano', 'maximo', 'melchor', 'michael', 'miguel', 'misael', 'modesto',
+      'moises',
+      // N
+      'narciso', 'natalio', 'nazario', 'nehemias', 'nelson', 'nemesio', 'nestor', 'nicanor',
+      'nicolas', 'noah', 'noe', 'noel', 'norberto',
+      // O
+      'octavio', 'oliver', 'oliverio', 'omar', 'orazio', 'orestes', 'orlando', 'oscar', 'oseas',
+      'osmin', 'osvaldo', 'oswaldo', 'otilio', 'otoniel', 'ovidio',
+      // P
+      'pablo', 'pancracio', 'panfilo', 'pascual', 'patricio', 'paul', 'paulino', 'pedro', 'pelayo',
+      'percy', 'pio', 'placido', 'plutarco', 'policarpo', 'ponciano', 'porfirio', 'primitivo',
+      'prospero', 'prudencio',
+      // R
+      'rafael', 'rami', 'ramiro', 'ramon', 'raul', 'raymundo', 'reimundo', 'reinaldo', 'remigio',
+      'renato', 'rene', 'rey', 'reynaldo', 'ricardo', 'richard', 'rigoberto', 'roberto', 'rodolfo',
+      'rodrigo', 'rogelio', 'roger', 'rolando', 'ronal', 'ronald', 'roque', 'rosendo', 'ruben',
+      'ruperto',
+      // S
+      'sabino', 'salomon', 'salvador', 'samir', 'samuel', 'sancho', 'santiago', 'santino',
+      'santos', 'saturnino', 'saul', 'sebastian', 'segismundo', 'serapio', 'sergio', 'servando',
+      'severino', 'severo', 'silverio', 'silvestre', 'silvio', 'simon', 'sixto', 'stewart',
+      'steven', 'stiven',
+      // T
+      'tadeo', 'teodoro', 'teofilo', 'thiago', 'tiago', 'tibursio', 'timoteo', 'tito', 'tomas',
+      'toribio',
+      // U
+      'ulises', 'urbano',
+      // V
+      'valentin', 'valerio', 'venceslao', 'vicente', 'victor', 'victorio', 'vidal', 'virgilio',
+      'vladimir',
+      // W
+      'walter', 'wenceslao', 'wilfrido', 'williams', 'willy', 'wilmar', 'wilmer', 'wilson',
+      // X
+      'xavier',
+      // Y
+      'yadir', 'yeferson', 'yeider', 'yeimer', 'yeison', 'yohan', 'yomar',
+      // Z
+      'zacarias'
     ]);
+
+    // Detección directa si el usuario dice: "me llamo X", "mi nombre es X", "hablas con X", "soy X"
+    const introMatch = cleanLower.match(/\b(?:me llamo|mi nombre es|hablas con|(?:^|\s)soy)\s+([a-z]+)\b/i);
+    if (introMatch && introMatch[1]) {
+      const candidateNameWord = introMatch[1].trim();
+      if (maleNames.has(candidateNameWord)) {
+        return candidateNameWord.charAt(0).toUpperCase() + candidateNameWord.slice(1);
+      }
+    }
 
     const stopWords = new Set([
       'si', 'no', 'hola', 'buenas', 'dias', 'tardes', 'noches', 'oferta', 'postulacion', 'vacante',
@@ -565,14 +653,22 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
     reply = reply.replace(/\s*y\s+\*{0,2}no\s+es\s+negociable\*{0,2},?/gi, '');
     reply = reply.replace(/\*{0,2}no\s+es\s+negociable\*{0,2}/gi, '');
 
-    // Blindaje Anti-Hombre en respuesta generada: Si la IA saludó a un hombre (ej: "¡Qué bien, Juan!", "Mucho gusto, Carlos")
-    const maleGreetingMatch = reply.match(/(?:¡?[Qq]ué bien|¡?[Mm]ucho gusto|¡?[Pp]erfecto|¡?[Hh]ola),?\s+([A-Za-zÁ-ÿ]+)[!.,]?/i);
+    // Blindaje Anti-Hombre en respuesta generada: Si la IA saludó a un hombre (ej: "¡Genial, Jesus!", "¡Qué bien, Juan!", "Mucho gusto, Carlos")
+    const maleGreetingMatch = reply.match(/(?:¡?[Qq]u[eé]\s+bien|¡?[Mm]ucho\s+gusto|¡?[Pp]erfecto|¡?[Gg]enial|¡?[Ee]xcelente|¡?[Hh]ola(?:\s+de\s+nuevo)?|¡?[Bb]ienvenid[oa]),?\s+([A-Za-zÁ-ÿ]+)[!.,]?/i);
     if (maleGreetingMatch && maleGreetingMatch[1]) {
       const greeted = maleGreetingMatch[1].trim();
       const isMaleGreeted = this.detectMale(greeted);
       if (isMaleGreeted) {
         console.warn(`[AIAgent] Se interceptó saludo a hombre en respuesta (${greeted}). Reemplazando por rechazo formal.`);
         return `Hola, ${isMaleGreeted}. Agradecemos sinceramente tu interés en CamHouse By C&A. Sin embargo, te informamos de manera muy respetuosa que esta postulación de modelaje webcam está dirigida exclusivamente a mujeres, por lo que en esta oportunidad no es posible continuar con tu proceso. Te deseamos muchos éxitos en tus proyectos.`;
+      }
+    }
+
+    if (candidateName && candidateName !== 'linda') {
+      const isCandidateMale = this.detectMale(candidateName);
+      if (isCandidateMale) {
+        console.warn(`[AIAgent] Se interceptó candidateName masculino en safeguards (${candidateName}). Reemplazando por rechazo formal.`);
+        return `Hola, ${isCandidateMale}. Agradecemos sinceramente tu interés en CamHouse By C&A. Sin embargo, te informamos de manera muy respetuosa que esta postulación de modelaje webcam está dirigida exclusivamente a mujeres, por lo que en esta oportunidad no es posible continuar con tu proceso. Te deseamos muchos éxitos en tus proyectos.`;
       }
     }
 

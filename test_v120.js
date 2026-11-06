@@ -53,8 +53,15 @@ async function runTests() {
     const maleVaron = geminiAgent.detectMale('Reciben varones?');
     assert(maleVaron !== null, '"Reciben varones?" debe ser detectado como hombre');
 
+    const maleJesus = geminiAgent.detectMale('si me interesa, mi nombre es jesus');
+    assert(maleJesus === 'Jesus', '"si me interesa, mi nombre es jesus" debe ser detectado como Jesus');
+
     const maleName = geminiAgent.detectMale('Me llamo Carlos Andrés');
     assert(maleName === 'Carlos', '"Me llamo Carlos Andrés" debe ser detectado como Carlos');
+
+    const resJesus = await geminiAgent.generateResponse('linea_reclutamiento', 'si me interesa, mi nombre es jesus');
+    assert(resJesus.isRejected === true && resJesus.rejectionStatus === 'No Apto - Hombre', 'Respuesta para "jesus" es rechazo formal');
+    assert(resJesus.text.includes('Hola, Jesus.'), 'Respuesta para "jesus" saluda como Jesus en el rechazo');
 
     // Convivencia de mujer con hombre NO debe ser detectada como hombre
     const femaleWithHusband = geminiAgent.detectMale('vivo con mi novio Carlos');

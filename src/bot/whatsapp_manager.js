@@ -550,19 +550,49 @@ class WhatsAppManager {
           await new Promise(resolve => setTimeout(resolve, 1800));
         }
 
-        // Enviar por WhatsApp
-        if (line && line.socket) {
-          try {
-            const sentMsg = await line.socket.sendMessage(contactJid, { text: partText });
-            if (sentMsg?.key?.id) {
-              this.sentByBotIds.add(sentMsg.key.id);
+        // Enviar por WhatsApp con verificación de conexión y reintentos automáticos
+        let sendSuccess = false;
+        if (line) {
+          // Si la línea está iniciando o reconectando, esperar hasta 3.5 segundos a que el socket quede en connected
+          if (line.status !== 'connected') {
+            for (let wait = 0; wait < 7 && line.status !== 'connected'; wait++) {
+              await new Promise(r => setTimeout(r, 500));
             }
-            try {
-              await line.socket.sendPresenceUpdate('paused', contactJid);
-            } catch (_) {}
-          } catch (sendErr) {
-            console.warn(`[WhatsAppManager] [${lineKey}] Error enviando mensaje a ${contactJid}:`, sendErr.message);
           }
+
+          if (line.socket && line.status === 'connected') {
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const sentMsg = await line.socket.sendMessage(contactJid, { text: partText });
+                if (sentMsg?.key?.id) {
+                  this.sentByBotIds.add(sentMsg.key.id);
+                }
+                try {
+                  await line.socket.sendPresenceUpdate('paused', contactJid);
+                } catch (_) {}
+                sendSuccess = true;
+                break;
+              } catch (sendErr) {
+                console.warn(`[WhatsAppManager] [${lineKey}] Intento ${attempt}/3 falló enviando a ${contactJid}:`, sendErr.message);
+                if (attempt < 3) {
+                  await new Promise(r => setTimeout(r, 1200));
+                }
+              }
+            }
+          }
+        }
+
+        // Si falló el envío por WhatsApp real tras los reintentos, no envenenar el historial del chat
+        if (!sendSuccess) {
+          console.warn(`[WhatsAppManager] [${lineKey}] ⚠️ No se pudo entregar mensaje por WhatsApp a ${contactJid}. Se omite registro en DB para no desincronizar el historial.`);
+          if (this.io) {
+            this.io.emit('send_error', {
+              line: lineKey,
+              chatId: contactJid,
+              error: 'No se pudo entregar el mensaje a WhatsApp. Verifique la conexión de la línea.'
+            });
+          }
+          continue;
         }
 
         // Guardar cada burbuja en la base de datos
