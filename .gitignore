@@ -10,6 +10,7 @@ data/metrics.json
 # Paquetes y binarios pesados
 node_modules/
 runtime/
+copia_nuevo_bot/
 *.exe
 *.zip
 build/payload.zip
