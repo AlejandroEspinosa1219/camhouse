@@ -1,7 +1,7 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-05",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.2.1 — Notificaciones de actualización en tiempo real (cada 15s / Socket.io), bienvenida institucional 100% blindada, y eliminación de nombres falsos desde metadatos de WhatsApp."
+  "changelog": "Versión 1.2.2 — Arranque automático garantizado para ambas líneas de WhatsApp (Línea 1 Reclutamiento y Línea 2 Administración)."
 }

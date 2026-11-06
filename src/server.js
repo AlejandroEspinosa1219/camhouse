@@ -361,6 +361,10 @@ server.listen(config.PORT, () => {
 ╚════════════════════════════════════════════════════════════════╝
   `);
 
+  // Iniciar automáticamente la escucha de sockets de WhatsApp para ambas líneas
+  whatsappManager.startLine('linea_reclutamiento');
+  whatsappManager.startLine('linea_administracion');
+
   // Monitor en tiempo real de actualizaciones OTA en GitHub (cada 15 segundos)
   setInterval(async () => {
     try {
@@ -370,5 +374,4 @@ server.listen(config.PORT, () => {
       }
     } catch (_) {}
   }, 15000);
-  whatsappManager.startLine('linea_administracion');
 });
