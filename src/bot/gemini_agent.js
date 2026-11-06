@@ -168,7 +168,7 @@ class AIAgent {
   }
 
   // Extractor centralizado e inquebrantable del nombre de la candidata
-  extractCandidateName(userMessage = '', conversationHistory = [], knownName = '') {
+  extractCandidateName(userMessage = '', conversationHistory = []) {
     const parseUserTextForName = (txt) => {
       if (!txt || typeof txt !== 'string') return null;
       const patterns = [
@@ -193,12 +193,6 @@ class AIAgent {
     // 1. Buscar en el mensaje actual del usuario lo que ella escribió explícitamente
     const fromCurrentMsg = parseUserTextForName(userMessage);
     if (fromCurrentMsg) return fromCurrentMsg;
-
-    // 2. Si hay un nombre previamente registrado y validado en la ficha del contacto
-    if (knownName && typeof knownName === 'string') {
-      const vKnown = this.cleanAndValidateCandidateName(knownName);
-      if (vKnown) return vKnown;
-    }
 
     // 2. Si el último mensaje del bot le preguntó el nombre y el usuario respondió
     if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
@@ -490,7 +484,7 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 
     // 3. Diccionario exhaustivo de nombres masculinos en Colombia y Latinoamérica
     const maleNames = new Set([
-      'juan', 'carlos', 'andres', 'david', 'alejandro', 'daniel', 'santiago', 'mateo', 'sebastian',
+      'juan', 'carlos', 'andres', 'david', 'alejandro', 'alejo', 'alejoespinosa', 'alejito', 'daniel', 'santiago', 'mateo', 'sebastian',
       'felipe', 'camilo', 'diego', 'jose', 'luis', 'jorge', 'pedro', 'manuel', 'mario', 'alberto',
       'miguel', 'fernando', 'ricardo', 'esteban', 'samuel', 'kevin', 'brian', 'bryan', 'alexander',
       'cristian', 'christian', 'gabriel', 'pablo', 'sergio', 'javier', 'victor', 'hugo', 'eduardo',
@@ -582,9 +576,17 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       }
     }
 
-    // Blindaje 1: Si es el primer mensaje y no hay nombre extraído aún, forzar saludo oficial Paso 1
-    if (!hasBotSpoken && candidateName === 'linda') {
-      reply = '¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️';
+    // Blindaje 1: En el primer mensaje de la conversación (cuando el bot nunca ha hablado en este chat):
+    if (!hasBotSpoken) {
+      // Verificar si en este primer mensaje la chica escribió EXPLÍCITAMENTE su nombre
+      const explicitIntroPattern = /(?:me llamo|mi nombre es|hablas con|(?:^|\s)soy)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i;
+      const mIntro = String(userMessage || '').match(explicitIntroPattern);
+      const validatedIntroName = mIntro && mIntro[1] ? this.cleanAndValidateCandidateName(mIntro[1]) : null;
+
+      if (!validatedIntroName) {
+        // SIEMPRE saludo oficial institucional del Paso 1
+        return '¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️';
+      }
     }
 
     // Blindaje 1.5: Si la candidata ya dio su nombre y edad en el mensaje actual, nunca preguntarle "¿Y cómo es tu nombre?"

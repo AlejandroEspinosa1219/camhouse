@@ -523,10 +523,9 @@ class WhatsAppManager {
 
       // Obtener el historial completo actualizado
       const history = currentChat ? currentChat.messages : [];
-      const knownName = (currentChat && currentChat.name && !currentChat.name.startsWith('+') && currentChat.name !== 'Contacto WhatsApp') ? currentChat.name : '';
 
-      // Llamar a la IA con el mensaje unificado y el nombre conocido
-      const aiResult = await geminiAgent.generateResponse(lineKey, combinedText, history, knownName);
+      // Llamar a la IA con el mensaje unificado (el nombre se extrae exclusivamente de lo que la chica escribe en la charla)
+      const aiResult = await geminiAgent.generateResponse(lineKey, combinedText, history);
 
       // Dividir en múltiples burbujas si contiene separador ---SPLIT---
       const rawText = aiResult.text || '';
