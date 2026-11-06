@@ -333,6 +333,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Verificar actualización OTA inmediatamente al conectar el cliente web
+  updater.checkForUpdates().then((updateCheck) => {
+    if (updateCheck && updateCheck.updateAvailable) {
+      socket.emit('ota_update_available', updateCheck);
+    }
+  }).catch(() => {});
+
   socket.on('disconnect', () => {
     // console.log(`[Socket.io] Cliente desconectado: ${socket.id}`);
   });
@@ -354,7 +361,14 @@ server.listen(config.PORT, () => {
 ╚════════════════════════════════════════════════════════════════╝
   `);
 
-  // Opcional: Iniciar automáticamente la escucha de sockets de WhatsApp
-  whatsappManager.startLine('linea_reclutamiento');
+  // Monitor en tiempo real de actualizaciones OTA en GitHub (cada 15 segundos)
+  setInterval(async () => {
+    try {
+      const updateCheck = await updater.checkForUpdates();
+      if (updateCheck && updateCheck.updateAvailable) {
+        io.emit('ota_update_available', updateCheck);
+      }
+    } catch (_) {}
+  }, 15000);
   whatsappManager.startLine('linea_administracion');
 });

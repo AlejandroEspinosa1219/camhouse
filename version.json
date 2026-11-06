@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "CamHouse By C&A Enterprise",
   "releaseDate": "2026-11-05",
   "githubRepo": "AlejandroEspinosa1219/camhouse",
-  "changelog": "Versión 1.2.0 — Paquete Consolidado Oficial: Bienvenida institucional con cadencia humana, filtro estricto de hombres y nombres sin falsos positivos ('soy soltera'), filtro riguroso de convivencia en Paso 4, cobertura oficial de 8 municipios para entrega de equipos, menú de 4 opciones conversacional fluido, y Vigilante 24/7 Anti-Caídas (Watchdog WhatsApp)."
+  "changelog": "Versión 1.2.1 — Notificaciones de actualización en tiempo real (cada 15s / Socket.io), bienvenida institucional 100% blindada, y eliminación de nombres falsos desde metadatos de WhatsApp."
 }

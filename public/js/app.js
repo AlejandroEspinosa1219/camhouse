@@ -31,21 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAppUpdates();
 });
 
-// Verificación periódica de actualizaciones cada 3 minutos y al enfocar la ventana
-setInterval(checkAppUpdates, 3 * 60 * 1000);
+// Verificación ultra rápida en tiempo real cada 15 segundos y al enfocar la ventana
+setInterval(checkAppUpdates, 15 * 1000);
 window.addEventListener('focus', checkAppUpdates);
+
+function renderUpdateBanner(data) {
+  if (!data || !data.updateAvailable) return;
+  const banner = document.getElementById('ota-update-banner');
+  const tag = document.getElementById('ota-version-tag');
+  const changelog = document.getElementById('ota-changelog-text');
+  if (tag) tag.textContent = `v${data.latestVersion}`;
+  if (changelog && data.changelog) changelog.textContent = data.changelog;
+  if (banner) banner.classList.remove('hidden');
+}
 
 async function checkAppUpdates() {
   try {
     const res = await fetch('/api/system/check-update', { method: 'POST' });
     const data = await res.json();
     if (data && data.updateAvailable) {
-      const banner = document.getElementById('ota-update-banner');
-      const tag = document.getElementById('ota-version-tag');
-      const changelog = document.getElementById('ota-changelog-text');
-      if (tag) tag.textContent = `v${data.latestVersion}`;
-      if (changelog && data.changelog) changelog.textContent = data.changelog;
-      if (banner) banner.classList.remove('hidden');
+      renderUpdateBanner(data);
     }
   } catch (e) {
     // Silencioso si no hay internet o GitHub no responde
@@ -124,7 +129,11 @@ function setupSocketListeners() {
     }
   });
 
-  // Mensaje nuevo
+  // Actualización OTA disponible en tiempo real
+  socket.on('ota_update_available', (data) => {
+    console.log('[Socket] 🔔 Actualización OTA disponible en tiempo real:', data);
+    renderUpdateBanner(data);
+  });
   socket.on('new_message', (data) => {
     if (data.line === currentLine) {
       if (currentContactId === data.chatId) {
