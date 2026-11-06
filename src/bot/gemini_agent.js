@@ -146,7 +146,20 @@ class AIAgent {
       'jajajaja', 'jejejeje', 'jajajajaja', 'haha', 'hahaha', 'xd', 'lol', 'tambien', 'tambn',
       'tbn', 'obvio', 'seguro', 'verdad', 'exacto', 'correcto', 'entonces', 'pues', 'bueno',
       'mira', 'oye', 'bebe', 'bb', 'porfa', 'porfavor', 'favor', 'uno', 'una', 'unas', 'unos',
-      'mas', 'menos', 'muy', 'mucho', 'mucha', 'muchos', 'muchas', 'nada', 'poco', 'poca'
+      'mas', 'menos', 'muy', 'mucho', 'mucha', 'muchos', 'muchas', 'nada', 'poco', 'poca',
+      // Estado civil y convivencia (NUNCA deben tomarse como nombres propios)
+      'soltera', 'soltero', 'casada', 'casado', 'divorciada', 'divorciado', 'viuda', 'viudo',
+      'separada', 'separado', 'union', 'libre', 'comprometida', 'comprometido',
+      // Familia y maternidad
+      'mama', 'madre', 'papa', 'padre', 'hijo', 'hija', 'hijos', 'hijas', 'hermano', 'hermana',
+      'hermanos', 'hermanas', 'tio', 'tia', 'tios', 'tias', 'primo', 'prima', 'primos', 'primas',
+      'abuelo', 'abuela', 'abuelos', 'sobrino', 'sobrina', 'sobrinos', 'novio', 'novia', 'esposo',
+      'esposa', 'marido', 'conyuge', 'amigo', 'amiga', 'amigos', 'amigas', 'familia', 'familiares',
+      // Ocupaciones / Situaciones
+      'estudiante', 'trabajadora', 'trabajador', 'empleada', 'empleado', 'ama', 'profesora', 'independiente',
+      // Gentilicios / Género / Descriptores
+      'colombiana', 'colombiano', 'venezolana', 'venezolano', 'paisa', 'costena', 'costeno', 'rola', 'rolo',
+      'mayor', 'menor', 'joven', 'adulta', 'adulto', 'varon', 'varones', 'senora', 'senor', 'man'
     ]);
 
     if (blacklist.has(lower)) return null;
@@ -159,16 +172,19 @@ class AIAgent {
     const parseUserTextForName = (txt) => {
       if (!txt || typeof txt !== 'string') return null;
       const patterns = [
-        /(?:me llamo|mi nombre es|soy|yo soy|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/i,
-        /(?:^|\n)\s*([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+(?:tengo\s+)?\d{2}\s*(?:años|anos)?/i,
-        /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/i,
-        /(?:^|\n)\s*hola[,.\s]+(?:soy|me llamo)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/i
+        /(?:me llamo|mi nombre es|hablas con)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})/gi,
+        /(?:^|\n)\s*([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+(?:tengo\s+)?\d{2}\s*(?:años|anos)?/gi,
+        /(?:^|\n)\s*hola[,.\s]+(?:mucho gusto[,.\s]+)?([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\s+\d{2}/gi,
+        /(?:^|\n)\s*hola[,.\s]+(?:soy|me llamo)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/gi,
+        /(?:^|\s)(?:soy|yo soy)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ]{3,18})\b/gi
       ];
       for (const regex of patterns) {
-        const m = txt.trim().match(regex);
-        if (m && m[1]) {
-          const v = this.cleanAndValidateCandidateName(m[1]);
-          if (v) return v;
+        let match;
+        while ((match = regex.exec(txt)) !== null) {
+          if (match[1]) {
+            const v = this.cleanAndValidateCandidateName(match[1]);
+            if (v) return v;
+          }
         }
       }
       return null;
@@ -177,6 +193,12 @@ class AIAgent {
     // 1. Buscar en el mensaje actual del usuario lo que ella escribió explícitamente
     const fromCurrentMsg = parseUserTextForName(userMessage);
     if (fromCurrentMsg) return fromCurrentMsg;
+
+    // 2. Si hay un nombre previamente registrado y validado en la ficha del contacto
+    if (knownName && typeof knownName === 'string') {
+      const vKnown = this.cleanAndValidateCandidateName(knownName);
+      if (vKnown) return vKnown;
+    }
 
     // 2. Si el último mensaje del bot le preguntó el nombre y el usuario respondió
     if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
@@ -384,22 +406,43 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
   Si ya sabes su nombre, salúdala por su nombre; si aún no te ha dicho su nombre, pregúntaselo con cariño junto con su edad. Recálcale con tranquilidad que aquí no debe invertir ni un solo peso y que le prestamos todos los equipos profesionales.
 * **Paso 3: Motivación:**
   Si cumple con la edad (22-40), felicítala y pregúntale qué la motivó a querer trabajar desde casa como modelo.
-* **Paso 4: Espacio Privado y Validación de Convivencia:**
-  - Primero, conecta con su meta y pregúntale si cuenta con un espacio privado en su habitación para transmitir y con quién vive (sola, pareja, hijos o familiares).
-  - Cuando ella te diga con quién vive, NUNCA saltes directo a los horarios del Paso 5. Haz primero la validación correspondiente con empatía, calidez y sin juzgar:
-    * **Si vive con su PAREJA (novio o esposo):** Pregúntale con empatía y cercanía: *«¡Súper, ${hasRealName ? candidateName : 'linda'}! Y cuéntame con total confianza: ¿tu pareja sabe y te apoya con que te dediques al modelaje webcam, o sería algo privado solo para ti? 🫶🏽»*. (Una vez responda si sabe o si es privado, dale tranquilidad y avanza al Paso 5).
-    * **Si vive con sus PADRES o FAMILIARES:** Pregúntale con calidez: *«¡Qué bien, ${hasRealName ? candidateName : 'linda'}! ☺️ Y cuéntame con confianza: ¿tus padres o familiares están de acuerdo con la postulación, o tienes tu habitación privada para trabajar tranquila y sin que te interrumpan? 🫶🏽»*. (Una vez responda, dale tranquilidad y avanza al Paso 5).
-    * **Si vive con sus HIJOS:** Respóndele con orgullo maternal: *«¡Qué hermoso, ${hasRealName ? candidateName : 'linda'}! Los hijos son la mayor motivación para salir adelante y darles lo mejor 👑🥰 Cuéntame, ¿tienes tus horarios organizados (mientras están en el colegio o durmiendo) y tu espacio privado para hacer tus 6 horitas tranquila y sin interrupciones? 🫶🏽✨»*. (Una vez responda, convalidas y avanzas al Paso 5).
-    * **Si vive SOLA:** Celebra su independencia: *«¡Uff, genial, ${hasRealName ? candidateName : 'linda'}! Vivir sola es la mejor ventaja de todas porque tienes privacidad total e independencia para trabajar a tu propio ritmo 👑✨»*, y de inmediato continúa con el Paso 5.
-  - Si ella ya te respondió esa validación de convivencia (por ejemplo, te dice que la apoyan, o que es algo privado, o que tiene seguro en su puerta, o que los hijos van a la escuela): convalídale con mucha calidez (ej: "¡Qué bueno contar con ese apoyo!", o "Entiendo perfecto, con nosotras cuentas con total discreción y privacidad 🔒") y avanza directamente al **Paso 5**.
+* **Paso 4: Espacio Privado y Filtro Estricto de Convivencia:**
+  - Primero, conecta con su motivación y pregúntale si cuenta con un espacio privado en su habitación para transmitir y con quién vive (sola, pareja, hijos, familiares o amigos).
+  - FILTRO OBLIGATORIO DE CONVIVENCIA Y PRIVACIDAD (ESTRICTO):
+    * **Si vive SOLA:** Celebra su independencia: *«¡Uff, genial, ${hasRealName ? candidateName : 'linda'}! Vivir sola es una ventaja maravillosa porque tienes total privacidad e independencia para trabajar a tu propio ritmo 👑✨»*, y de inmediato continúa con el Paso 5.
+    * **Si vive ACOMPAÑADA (pareja, padres, familiares, hijos adultos o amigos):** Es OBLIGATORIO confirmar si las personas con quienes vive tienen conocimiento y la apoyan en su labor como modelo webcam. Pregúntale con empatía y cercanía:
+      *«¡Súper, ${hasRealName ? candidateName : 'linda'}! ☺️ Y cuéntame con total confianza: ¿las personas con quienes vives saben y te apoyan con que trabajes como modelo webcam? 🫶🏽»*
+    * **CRITERIO ESTRICTO DE DESCALIFICACIÓN:**
+      - Si la respuesta es NEGATIVA (te indica que NO saben, que se los oculta, que es un secreto, que lo haría a escondidas, o que NO están de acuerdo / NO la apoyan), la candidata NO CUMPLE LOS REQUISITOS.
+      - Debes detener el proceso inmediatamente y aplicar el PROTOCOLO DE DESPEDIDA:
+        *«Entiendo perfectamente, ${hasRealName ? candidateName : 'linda'}. En CamHouse valoramos ante todo tu tranquilidad y la armonía en tu hogar. Dado que para la modalidad desde casa es un requisito indispensable contar con el pleno conocimiento y apoyo de quienes conviven contigo, en esta oportunidad no podemos continuar con tu proceso. Te deseamos muchos éxitos y bendiciones en tus proyectos 💖✨»*
+      - NUNCA continúes con preguntas del proceso ni pases al Paso 5 si no cuenta con el apoyo de las personas con quienes vive.
+    * **Si la respuesta es POSITIVA (SÍ saben y la apoyan):** Felicítala con calidez: *«¡Qué maravilla contar con ese apoyo en casa! Eso te dará muchísima tranquilidad 👑🥰»*, y continúa de inmediato con el **Paso 5 (Disponibilidad de Horarios)**.
 * **Paso 5: Disponibilidad de Horarios:**
   Valida si cuenta con 6 horas diarias flexibles (de lunes a sábado) y si podría iniciar pronto (en los próximos 3 días).
-* **Paso 6: Plataformas, Bloqueo y Ganancias:**
-  Cuéntale sobre las plataformas, el bloqueo total para Colombia, y las ganancias semanales del 60%-70% en USD. Pregúntale si tiene dudas o si desea continuar.
+* **Paso 6: Plataformas, Bloqueo y Menú Informativo de 4 Opciones:**
+  - Explícale sobre las mejores plataformas (privadas como Streamate y Flirt4Free, públicas como Stripchat y Chaturbate), el bloqueo 100% para toda Colombia (nadie de tu país podrá verte jamás), y las ganancias del 60% al 70% libre en USD.
+  - Ofrécele con total naturalidad el Menú de 4 puntos clave antes de pasar a la siguiente etapa:
+    *«Para que tengas total claridad de cada detalle, dime sobre cuál de estos temas te gustaría saber más o escríbeme el número:
+    1. *Ganancias y pagos* 💸
+    2. *Horarios de transmisión* ⏰
+    3. *Kit de equipos prestados* 💻
+    4. *Claridad del proceso de inicio* 👑
+    ¿O estás lista para conocer los beneficios y continuar con tus fotos de perfil? ✨»*
+  - Si la chica escribe "1", "2", "3", "4" o pregunta por alguno de ellos, respóndele de forma espléndida, estructurada y cálida (como en los ejemplos de la matriz), y luego pregúntale si le quedó claro o si desea continuar al Paso 7.
 * **Paso 7: Beneficios y 2 Fotos de Perfil:**
   Menciónale los beneficios (crédito para lencería, fotos, gimnasio, monitoras) y pídele con mucha amabilidad 2 fotos (una de rostro y una de cuerpo) para conocer su perfil, recordándole que no se discrimina a nadie.
-* **Paso 8: Confirmación de Sector (Medellín y Área Metro):**
-  Agradece sus fotos y confirma en qué sector o barrio de Medellín o Área Metropolitana vive para coordinar la entrega.
+* **Paso 8: Confirmación de Cobertura para Préstamo de Equipos (8 Zonas Oficiales):**
+  - Agradece sus fotos y confirma en qué municipio o sector vive para la entrega del kit de equipos.
+  - REGLA ESTRICTA DE COBERTURA: El beneficio de préstamo de equipos con entrega e instalación en casa aplica exclusivamente para **Medellín** y los siguientes 7 municipios adicionales:
+    1. San Antonio de Prado
+    2. Sabaneta
+    3. Envigado
+    4. Copacabana
+    5. Girardota
+    6. Barbosa
+    7. La Estrella
+  - Si la candidata vive en cualquier otro municipio o ciudad (incluyendo Bello, Itagüí, Caldas, Rionegro, Bogotá, etc.), no cumple con la cobertura. Debes agradecerle y despedirte cordialmente indicándole que por ahora la entrega de equipos solo cubre Medellín y los 7 municipios autorizados.
 * **Paso 9: Cierre Exitoso y Contacto del Coordinador:**
   Felicítala por completar el proceso y entrégale el contacto de nuestro coordinador al WhatsApp **3215863996**, recordándole siempre decirle que habló con **Alejandra Ramírez** para agendar la entrega de sus equipos profesionales.
 
@@ -429,13 +472,15 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       return null;
     }
 
-    // 2. Frases directas que indican aspirante hombre
+    // 2. Frases directas y pronombres/adjetivos que indican aspirante hombre
     const malePhrases = [
-      /\b(?:soy|yo soy|me llamo|mi nombre es)\s+(?:un\s+)?(?:hombre|varon|chico|chico trans|hombre trans|masculino)\b/i,
-      /\b(?:soy|yo soy)\s+(?:hombre|varon|chico|masculino)\b/i,
-      /\b(?:para|pueden|reciben|aceptan|admiten|trabajo para)\s+hombres\b/i,
-      /\b(?:modelo|postulacion|vacante)\s+(?:masculino|masculina|para hombres)\b/i,
-      /^(?:hombre|masculino|varon)$/i
+      /\b(?:soy|yo soy|me llamo|mi nombre es)\s+(?:un\s+)?(?:hombre|varon|varón|chico|chico trans|hombre trans|masculino|soltero|casado|paisa hombre|chico gay|man)\b/i,
+      /\b(?:soy|yo soy)\s+(?:hombre|varon|varón|chico|masculino|soltero|casado|un man)\b/i,
+      /\b(?:siendo|para|pueden|reciben|aceptan|admiten|trabajo para|postulacion para|vacante para)\s+(?:hombres?|varones?|chicos?|man)\b/i,
+      /\b(?:un\s+hombre\s+puede|hombres\s+pueden|reciben\s+hombres|aceptan\s+hombres|trabajan\s+hombres)\b/i,
+      /\b(?:puedo\s+postularme\s+siendo\s+hombre|un\s+varon\s+puede|reciben\s+varones|aceptan\s+varones)\b/i,
+      /\b(?:modelo|postulacion|vacante)\s+(?:masculino|masculina|para hombres?)\b/i,
+      /^(?:hombre|masculino|varon|varón|chico|soltero)$/i
     ];
     for (const regex of malePhrases) {
       if (regex.test(cleanLower)) {
@@ -604,30 +649,19 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       };
     }
 
-    // 2. Detección de aspirante hombre (postulación exclusiva para mujeres) con Candado de Género
-    const hasConfirmedFemale = (candidateName && candidateName !== 'linda' && candidateName !== 'hermosa') || this.hasRealPhotoInConversation(userMessage, conversationHistory);
+    // 2. Detección de aspirante hombre (postulación exclusiva para mujeres)
+    let detectedMaleName = this.detectMale(userMessage);
 
-    let detectedMaleName = null;
-    if (!hasConfirmedFemale) {
-      detectedMaleName = this.detectMale(userMessage);
-
-      // Si no está en el mensaje actual, revisar si en el historial el usuario se presentó como hombre
-      if (!detectedMaleName && Array.isArray(conversationHistory)) {
-        for (const m of conversationHistory) {
-          if (!m.fromMe && m.text) {
-            const maleInPast = this.detectMale(m.text);
-            if (maleInPast) {
-              detectedMaleName = maleInPast;
-              break;
-            }
+    // Si no está en el mensaje actual, revisar si en el historial el usuario se presentó como hombre
+    if (!detectedMaleName && Array.isArray(conversationHistory)) {
+      for (const m of conversationHistory) {
+        if (!m.fromMe && m.text) {
+          const maleInPast = this.detectMale(m.text);
+          if (maleInPast) {
+            detectedMaleName = maleInPast;
+            break;
           }
         }
-      }
-    } else {
-      // Si la candidata ya es mujer confirmada con fotos o nombre verificado, solo detectar si escribe explícitamente "soy un hombre"
-      const explicitMale = /\b(?:soy|yo soy)\s+(?:un\s+)?(?:hombre|varon|chico|masculino)\b/i;
-      if (explicitMale.test(userMessage || '')) {
-        detectedMaleName = 'amigo';
       }
     }
 
@@ -665,24 +699,55 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       };
     }
 
-    // 2.6 Detección de ubicación genérica ("Desde Colombia") o ciudades fuera de cobertura de Medellín y Área Metropolitana
-    const medellinAreas = /\b(?:medellin|bello|envigado|itagui|sabaneta|estrella|la estrella|copacabana|girardota|caldas|antioquia|castilla|belen|poblado|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san antonio de prado|san antonio|altavista|san cristobal|san felix|sanfelix|santa elena|san diego|san lucas|san joaquin)\b/i;
-    const outOfCoverageCities = /\b(?:bogota|cali|barranquilla|cartagena|bucaramanga|cucuta|pereira|manizales|armenia|santa marta|ibague|pasto|monteria|villavicencio|neiva|valledupar|popayan|sincelejo|tunja|riohacha|quibdo|yopal|florencia|palmira|buenaventura|soacha|tulua|buga|cartago|sogamoso|duitama|barrancabermeja|girardot|dosquebradas|envigado_no)\b/i;
+    // 2.6 Cobertura Oficial para Préstamo de Equipos (Medellín + 7 municipios autorizados)
+    const allowedCoverageAreas = /\b(?:medellin|san antonio de prado|sabaneta|envigado|copacabana|girardota|barbosa|la estrella|estrella|castilla|belen|poblado|provenza|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san cristobal|altavista|santa elena|san felix|san diego|san lucas|san joaquin|estadio|la floresta|floresta|la america|america|patio bonito|conquistadores)\b/i;
+    const outOfCoverageCities = /\b(?:bello|itagui|caldas|rionegro|la ceja|marinilla|guarne|bogota|cali|barranquilla|cartagena|bucaramanga|cucuta|pereira|manizales|armenia|santa marta|ibague|pasto|monteria|villavicencio|neiva|valledupar|popayan|sincelejo|tunja|riohacha|quibdo|yopal|florencia|palmira|buenaventura|soacha|tulua|buga|cartago|sogamoso|duitama|barrancabermeja|girardot|dosquebradas)\b/i;
 
-    if (outOfCoverageCities.test(lowerUserMsg) && !medellinAreas.test(lowerUserMsg)) {
-      console.log(`[AIAgent] Ciudad fuera de cobertura detectada ("${userMessage}"). Enviando despedida amable y apagando IA.`);
+    if (outOfCoverageCities.test(lowerUserMsg) && !allowedCoverageAreas.test(lowerUserMsg)) {
+      console.log(`[AIAgent] Ubicación fuera de cobertura detectada ("${userMessage}"). Enviando despedida amable y desactivando IA.`);
       return {
-        text: `¡Muchas gracias por tu interés en CamHouse, ${candidateName}! ☺️ Te contamos con mucho cariño que por el momento nuestra cobertura para entrega e instalación de equipos profesionales en casa está disponible únicamente en **Medellín y el Área Metropolitana** (Bello, Envigado, Itagüí, Sabaneta, La Estrella, Copacabana, Girardota y Caldas).\n\nSi más adelante te trasladas a Medellín o abrimos cobertura en tu ciudad, estaremos felices de recibirte. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
+        text: `¡Muchas gracias por tu interés en CamHouse, ${candidateName}! ☺️ Te contamos con mucho cariño que por el momento el beneficio de préstamo de equipos con entrega e instalación en casa aplica exclusivamente para **Medellín** y los siguientes municipios autorizados: **San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella**.\n\nSi más adelante te trasladas a alguna de estas zonas o abrimos cobertura en tu municipio, estaremos felices de recibirte. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
         isHandoff: false,
         isRejected: true,
         rejectionStatus: 'Fuera de Cobertura',
-        reason: 'Candidata fuera de cobertura (Medellín / Área Metropolitana)'
+        reason: 'Candidata fuera de cobertura oficial de préstamo de equipos'
+      };
+    }
+
+    // 2.7 Filtro Estricto de Convivencia y Privacidad (Paso 4)
+    // Si la candidata vive acompañada y dice que NO saben, que se los oculta, que es un secreto o que NO la apoyan
+    const noLivingSupportPattern = /\b(?:no saben|no sabe|no les he dicho|no le he dicho|a escondidas|en secreto|oculto|a espaldas|no estan de acuerdo|no esta de acuerdo|no me apoya|no me apoyan|no les gusta|no le gusta|no lo aceptan|no lo aceptaria|se enojarian|se enojaria|no tienen idea|sin que se den cuenta)\b/i;
+
+    const lastBotMsg = Array.isArray(conversationHistory)
+      ? [...conversationHistory].reverse().find(m => m && m.fromMe && m.text)
+      : null;
+    const lastBotText = lastBotMsg ? lastBotMsg.text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+
+    const isEvaluatingCohabitation = (
+      lastBotText.includes('con quien vives') ||
+      lastBotText.includes('saben y te apoyan') ||
+      lastBotText.includes('saben y apoyan') ||
+      lastBotText.includes('estan de acuerdo') ||
+      lastBotText.includes('apoyan con que') ||
+      lastBotText.includes('tu pareja sabe') ||
+      lastBotText.includes('tus padres o familiares') ||
+      lowerUserMsg.includes('vivo con')
+    );
+
+    if (isEvaluatingCohabitation && noLivingSupportPattern.test(lowerUserMsg)) {
+      console.log(`[AIAgent] Filtro de convivencia no superado ("${userMessage}"). Aplicando protocolo de despedida inmediata.`);
+      return {
+        text: `Entiendo perfectamente, ${candidateName}. En CamHouse valoramos ante todo tu tranquilidad y la armonía en tu hogar. Dado que para la modalidad desde casa es un requisito indispensable contar con el pleno conocimiento y apoyo de quienes conviven contigo, en esta oportunidad no podemos continuar con tu proceso. Te deseamos muchos éxitos y bendiciones en tus proyectos 💖✨`,
+        isHandoff: false,
+        isRejected: true,
+        rejectionStatus: 'No Apta - Convivencia sin apoyo',
+        reason: 'Candidata vive acompañada sin conocimiento ni apoyo de sus convivientes'
       };
     }
 
     const isGenericColombiaLocation =
       /\b(?:desde|de|en|vivo en|soy de)\s+colombia\b/i.test(lowerUserMsg) &&
-      !medellinAreas.test(lowerUserMsg) &&
+      !allowedCoverageAreas.test(lowerUserMsg) &&
       !outOfCoverageCities.test(lowerUserMsg);
 
     if (isGenericColombiaLocation) {
@@ -701,13 +766,13 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 
       if (age !== null && age >= 22 && age <= 40) {
         return {
-          text: `¡Mucho gusto, ${candidateName}! ☺️ Con tus ${age} años cumples súper bien con la edad ideal, y algo muy importante: *aquí no tienes que invertir ni un solo peso* porque te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué ciudad y barrio de Colombia vives actualmente? Recuerda que entregamos todos los equipos profesionales directamente en tu casa en **Medellín y el Área Metropolitana** 💻✨`,
+          text: `¡Mucho gusto, ${candidateName}! ☺️ Con tus ${age} años cumples súper bien con la edad ideal, y algo muy importante: *aquí no tienes que invertir ni un solo peso* porque te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente? Recuerda que entregamos todos los equipos directamente en tu casa en **Medellín, San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella** 💻✨`,
           isHandoff: false
         };
       }
 
       return {
-        text: `¡Mucho gusto, ${candidateName}! ☺️ Recuerda que aquí *no tienes que invertir ni un solo peso* porque nosotras te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué ciudad y barrio de Colombia vives actualmente, y cuántos años tienes? Recuerda que nuestra entrega de equipos en casa es en **Medellín y el Área Metropolitana** 💻✨`,
+        text: `¡Mucho gusto, ${candidateName}! ☺️ Recuerda que aquí *no tienes que invertir ni un solo peso* porque nosotras te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente, y cuántos años tienes? Recuerda que nuestra entrega de equipos en casa es en **Medellín, San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella** 💻✨`,
         isHandoff: false
       };
     }
@@ -717,13 +782,17 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 
     const checkAutoRejectFromReply = (replyText) => {
       if (!replyText) return { isRejected: false, rejectionStatus: null };
-      if (replyText.includes('esta postulación de modelaje webcam está dirigida exclusivamente a mujeres')) {
+      if (replyText.includes('esta postulación de modelaje webcam está dirigida exclusivamente a mujeres') || replyText.includes('exclusivamente a mujeres')) {
         return { isRejected: true, rejectionStatus: 'No Apto - Hombre' };
+      }
+      if (replyText.includes('pleno conocimiento y apoyo de quienes conviven contigo') || replyText.includes('tranquilidad y la armonía en tu hogar') || replyText.includes('armonía en tu hogar')) {
+        return { isRejected: true, rejectionStatus: 'No Apta - Convivencia sin apoyo' };
       }
       if (
         replyText.includes('no es posible continuar con tu proceso') ||
         replyText.includes('los lineamientos de la postulación no permiten continuar') ||
         replyText.includes('cambias de opinión') ||
+        replyText.includes('municipios autorizados') ||
         replyText.includes('cobertura para entrega e instalación de equipos')
       ) {
         return { isRejected: true, rejectionStatus: 'Proceso Cerrado' };
@@ -894,6 +963,59 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
   generateSmartFallback(line, text, hasBotSpoken = false, candidateName = 'linda') {
     const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const nameToUse = candidateName && candidateName !== 'linda' ? candidateName : 'linda';
+
+    // Menú de 4 opciones del Paso 6 (por número o palabra clave)
+    if (/^(?:1|opcion 1|opción 1|uno|ganancias|pagos|cuanto pagan|tokens)\b/i.test(lower)) {
+      return {
+        text: `¡Claro que sí, ${nameToUse}! ☺️ Aquí tienes la información detallada sobre **Ganancias y Pagos**:
+
+1. *Porcentaje:* Inicias ganando el **60% de comisión libre** y subes al **70% libre** al superar los $1.000 USD 💸
+2. *Ingresos estimados:* Con 6 horas al día de lunes a sábado, tus ingresos serán de **$800.000 a $1'000.000 COP semanales** en tu primer mes, y van subiendo mes a mes 👑
+3. *Forma de pago:* Pagos puntuales semanales o quincenales directo a tu cuenta (Bancolombia, Nequi, Davivienda) o en USD/cripto ✨
+
+¿Te quedó claro o hay algún otro tema que quieras conocer? 🫶🏽`,
+        isHandoff: false
+      };
+    }
+
+    if (/^(?:2|opcion 2|opción 2|dos|horarios|turnos|horas)\b/i.test(lower)) {
+      return {
+        text: `¡Con gusto, ${nameToUse}! ☺️ Sobre los **Horarios de Transmisión**:
+
+1. *Jornada:* Son turnos de **6 horas diarias flexibles**, de lunes a sábado ⏰
+2. *Recomendación Estrella:* Te recomendamos súper especialmente iniciar en el **turno de la noche** (por ejemplo de 8:00 p.m. a 2:00 a.m. o de 9:00 p.m. a 3:00 a.m.), ya que es el horario con mayor tráfico internacional de usuarios para despegar con toda y generar ingresos mucho más rápido 👑💸
+3. *Flexibilidad:* Puedes coordinar tu horario para acomodarlo a tus rutinas y descansar los domingos ✨
+
+¿Te queda bien este esquema de horarios o deseas saber algo más? 🫶🏽`,
+        isHandoff: false
+      };
+    }
+
+    if (/^(?:3|opcion 3|opción 3|tres|equipos|kit|computador|camara)\b/i.test(lower)) {
+      return {
+        text: `¡Claro, ${nameToUse}! ☺️ Sobre el **Kit de Equipos Profesionales**:
+
+1. *Equipamiento completo:* Te llevamos a tu casa computador gamer de alta potencia para 3 plataformas a la vez, cámara 4K Sony profesional, iluminación LED/RGB, monitor, trípode y decoración 💻✨
+2. *Cero inversión:* El préstamo y la entrega son **100% gratuitos**, ¡no tienes que poner ni un solo peso de tu bolsillo! 👑
+3. *Cobertura:* Disponible para Medellín y los municipios autorizados (San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella) 🚚
+
+¿Te parece genial? Cuéntame si tienes alguna otra duda o si continuamos 🫶🏽`,
+        isHandoff: false
+      };
+    }
+
+    if (/^(?:4|opcion 4|opción 4|cuatro|proceso|claridad|como inicio|como empezar)\b/i.test(lower)) {
+      return {
+        text: `¡Súper, ${nameToUse}! ☺️ Te explico la **Claridad del Proceso de Inicio**:
+
+1. *Capacitación:* Recibes formación desde cero, así que no necesitas ninguna experiencia previa 👩🏻‍💻
+2. *Acompañamiento:* Tendrás una monitora mujer que te apoyará durante tus turnos para que nunca estés sola 🫶
+3. *Entrega de equipos:* Tras validar tus foticos y sector, te pasamos el contacto de nuestro coordinador para agendar la visita de instalación en tu casa 👑✨
+
+¿Estás lista para continuar con los beneficios y tus fotos de perfil? 💖`,
+        isHandoff: false
+      };
+    }
 
     // Si la candidata expresa miedo de dejar su trabajo actual o duda de si esto sí deja dinero
     const isAffirmativeOrNext = /^(?:si|sí|listo|dale|de una|super|súper|ok|perfecto|vamos)\b/i.test(lower) || /como es|como seria|que sigue|como hacemos|que hay que hacer|voy a renunciar|voy a dejarlo/i.test(lower);

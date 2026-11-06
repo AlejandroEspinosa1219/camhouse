@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $root = 'c:\Users\aespi\Automatizaciones\camhouse'
-$staging = Join-Path $env:TEMP 'camhouse_pkg_v113'
+$staging = Join-Path $env:TEMP 'camhouse_pkg_v120'
 $payloadZip = Join-Path $root 'build\payload.zip'
 $installerExe = Join-Path $root 'CamHouse_Instalador.exe'
 $installerZip = Join-Path $root 'CamHouse_Instalador.zip'

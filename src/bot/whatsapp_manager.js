@@ -50,6 +50,8 @@ class WhatsAppManager {
     this.DEBOUNCE_DELAY = 2800; // 2.8s de espera inteligente para acumular ráfagas de mensajes
     this.sentByBotIds = new Set(); // IDs de mensajes enviados por el propio bot/panel
     this.chatProcessingLocks = new Map(); // Mutex por chat para evitar doble respuesta simultánea
+    this.watchdogInterval = null;
+    this.startWatchdog();
   }
 
   setSocketIO(ioInstance) {
@@ -753,6 +755,70 @@ class WhatsAppManager {
       // Reiniciar automáticamente para generar un nuevo código QR de inmediato
       line.reconnectTimer = setTimeout(() => this.startLine(lineKey), 1200);
     }
+  }
+
+  // Vigilante 24/7 Anti-Caídas: Detecta conexiones zombie o caídas por reposo/madrugada y reconecta proactivamente
+  startWatchdog() {
+    if (this.watchdogInterval) clearInterval(this.watchdogInterval);
+    this.watchdogInterval = setInterval(async () => {
+      await this.checkSocketsHealth();
+    }, 60000); // Chequeo preventivo cada 60 segundos
+    console.log('[WhatsAppManager] 🛡️ Watchdog 24/7 Anti-Caídas activado (Monitor de estabilidad cada 60s)');
+  }
+
+  async checkSocketsHealth() {
+    for (const [lineKey, line] of Object.entries(this.lines)) {
+      try {
+        const hasCreds = fs.existsSync(path.join(line.folder, 'creds.json'));
+        if (!hasCreds) continue; // Si no hay sesión vinculada, omitir
+
+        if (line.status === 'connected') {
+          const ws = line.socket?.ws;
+          const isWsOpen = ws && ws.readyState === 1;
+
+          if (!isWsOpen) {
+            console.warn(`[WhatsAppManager] 🛡️ [Watchdog] Socket de ${line.name} no está en estado OPEN (readyState: ${ws ? ws.readyState : 'null'}). Reiniciando conexión silenciosamente...`);
+            await this.restartLineQuietly(lineKey);
+            continue;
+          }
+
+          // Socket aparentemente abierto: enviar ping de presencia activa para evitar conexiones zombie por NAT/router
+          try {
+            await line.socket.sendPresenceUpdate('available');
+          } catch (pingErr) {
+            console.warn(`[WhatsAppManager] 🛡️ [Watchdog] Falló ping de presencia en ${line.name} (${pingErr.message}). Conexión muerta/zombie detectada. Reconectando...`);
+            await this.restartLineQuietly(lineKey);
+          }
+        } else if (line.status === 'connecting' && !line.isStarting) {
+          // Si lleva tiempo en 'connecting' sin proceso activo
+          console.log(`[WhatsAppManager] 🛡️ [Watchdog] ${line.name} en estado 'connecting' sin proceso activo. Reintentando arranque...`);
+          await this.startLine(lineKey);
+        }
+      } catch (err) {
+        console.error(`[WhatsAppManager] 🛡️ [Watchdog] Error evaluando salud de ${lineKey}:`, err.message);
+      }
+    }
+  }
+
+  async restartLineQuietly(lineKey) {
+    const line = this.lines[lineKey];
+    if (!line || line.isStarting) return;
+
+    if (line.reconnectTimer) {
+      clearTimeout(line.reconnectTimer);
+      line.reconnectTimer = null;
+    }
+
+    if (line.socket) {
+      try {
+        line.socket.ev.removeAllListeners();
+        line.socket.end(undefined);
+      } catch (_) {}
+      line.socket = null;
+    }
+    line.status = 'connecting';
+    this.broadcastLineStatus(lineKey);
+    setTimeout(() => this.startLine(lineKey), 1500);
   }
 }
 

@@ -96,9 +96,23 @@
     "requisitos": [
       "Tener entre 22 y 40 años.",
       "Documento de identidad original y vigente (Cédula de Ciudadanía colombiana, Extranjería o Pasaporte vigente).",
-      "Contar con un espacio privado en casa en Medellín o área metropolitana.",
+      "Contar con un espacio privado en casa en Medellín o municipios con cobertura oficial de préstamo de equipos (San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella).",
+      "Si vive acompañada, contar con el pleno conocimiento y apoyo de quienes conviven con ella.",
       "Disponibilidad de 6 horas diarias de conexión.",
       "NO se requiere experiencia previa ni invertir un solo peso."
-    ]
+    ],
+    "cobertura_prestamo_equipos": {
+      "municipios_autorizados": [
+        "Medellín",
+        "San Antonio de Prado",
+        "Sabaneta",
+        "Envigado",
+        "Copacabana",
+        "Girardota",
+        "Barbosa",
+        "La Estrella"
+      ],
+      "condicion": "El beneficio de préstamo de equipos con entrega e instalación en casa aplica exclusivamente para Medellín y estos 7 municipios adicionales."
+    }
   }
 }
