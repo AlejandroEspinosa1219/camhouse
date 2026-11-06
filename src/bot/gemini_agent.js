@@ -236,6 +236,45 @@ class AIAgent {
     return 'linda';
   }
 
+  // Extractor universal e infalible de la edad de la candidata (con soporte para typos comunes como "trngo 44")
+  extractCandidateAge(userMessage = '', conversationHistory = []) {
+    if (!userMessage || typeof userMessage !== 'string') return null;
+    const cleanLower = userMessage.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    // 1. Patrones explícitos en el mensaje del usuario (con tolerancia a typos comunes: tengo, trngo, tngo, tng, etc.)
+    const explicitPatterns = [
+      /\b(?:tengo|trngo|tngo|tng|tnego|tg|tedad|edad|cumplo|de|con)\s*[:=]?\s*(\d{1,2})\b/i,
+      /\b(\d{1,2})\s*(?:anos|años|añitos|anitos|primaveras)\b/i,
+      /\bsoy\s+mayor\s+(?:de\s+)?(?:edad\s+)?(?:trngo|tengo|tngo|tng)?\s*(\d{1,2})\b/i
+    ];
+    for (const pat of explicitPatterns) {
+      const match = cleanLower.match(pat);
+      if (match && match[1]) {
+        const val = parseInt(match[1], 10);
+        if (val >= 12 && val <= 90) return val;
+      }
+    }
+
+    // 2. Si el último mensaje del bot le preguntó específicamente la edad y la usuaria responde con un número
+    if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      const lastBotMsg = [...conversationHistory].reverse().find(m => m && m.fromMe && m.text);
+      if (lastBotMsg && lastBotMsg.text) {
+        const askedForAge = /(?:cuantos anos|cuántos años|tu edad|que edad tienes|cuantos añitos)/i.test(
+          lastBotMsg.text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        );
+        if (askedForAge) {
+          const numMatch = cleanLower.match(/\b(\d{2})\b/);
+          if (numMatch && numMatch[1]) {
+            const val = parseInt(numMatch[1], 10);
+            if (val >= 12 && val <= 90) return val;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   // Verificar si la candidata REALMENTE ha enviado al menos una foto en la conversación
   hasRealPhotoInConversation(userMessage = '', conversationHistory = []) {
     const msgStr = String(userMessage || '');
@@ -398,20 +437,26 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
   "¡Hola! Soy Alejandra de CamHouse 🙋🏻‍♀️ Con nosotras puedes alcanzar esa independencia financiera que tanto quieres 💸 Esta postulación es para modelo webcam desde casa, ¿Te interesa la oferta? ¿Y cómo es tu nombre? ☺️"
 * **Paso 2: Cero Inversión y Edad (Rango 22 a 40 años):**
   Si ya sabes su nombre, salúdala por su nombre; si aún no te ha dicho su nombre, pregúntaselo con cariño junto con su edad. Recálcale con tranquilidad que aquí no debe invertir ni un solo peso y que le prestamos todos los equipos profesionales.
+  - REGLA CRÍTICA DE EDAD (22 A 40 AÑOS):
+    * Si la candidata indica tener MENOS de 22 años o MÁS de 40 años (por ejemplo 18, 19, 20, 21, 41, 44, 45, etc.): DEBES despedirte de inmediato con el rechazo oficial respetuoso:
+      «¡Mucho gusto, ${hasRealName ? candidateName : 'linda'}! ☺️ Agradecemos de corazón tu interés en CamHouse By C&A. Te contamos con mucho respeto que actualmente los lineamientos de nuestra convocatoria requieren una edad entre los **22 y 40 años**, por lo que en esta oportunidad no es posible continuar con el proceso. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨»
+      Queda TERMINANTEMENTE PROHIBIDO decirle que tiene la edad ideal o continuar con la postulación si está fuera del rango.
 * **Paso 3: Motivación:**
-  Si cumple con la edad (22-40), felicítala y pregúntale qué la motivó a querer trabajar desde casa como modelo.
+  Si cumple con la edad (22-40), felicítala por tener la edad ideal y pregúntale qué la motivó a querer trabajar desde casa como modelo.
 * **Paso 4: Espacio Privado y Filtro Estricto de Convivencia:**
   - Primero, conecta con su motivación y pregúntale si cuenta con un espacio privado en su habitación para transmitir y con quién vive (sola, pareja, hijos, familiares o amigos).
   - FILTRO OBLIGATORIO DE CONVIVENCIA Y PRIVACIDAD (ESTRICTO):
     * **Si vive SOLA:** Celebra su independencia: *«¡Uff, genial, ${hasRealName ? candidateName : 'linda'}! Vivir sola es una ventaja maravillosa porque tienes total privacidad e independencia para trabajar a tu propio ritmo 👑✨»*, y de inmediato continúa con el Paso 5.
-    * **Si vive ACOMPAÑADA (pareja, padres, familiares, hijos adultos o amigos):** Es OBLIGATORIO confirmar si las personas con quienes vive tienen conocimiento y la apoyan en su labor como modelo webcam. Pregúntale con empatía y cercanía:
-      *«¡Súper, ${hasRealName ? candidateName : 'linda'}! ☺️ Y cuéntame con total confianza: ¿las personas con quienes vives saben y te apoyan con que trabajes como modelo webcam? 🫶🏽»*
+    * **Si vive ACOMPAÑADA (pareja, padres, familiares, hijos adultos o amigos):** Es OBLIGATORIO confirmar si las personas con quienes vive tienen conocimiento y la apoyan.
+      IMPORTANTE: NUNCA asumas que cuenta con el apoyo solo porque te dijo con quién vive. Debes preguntar OBLIGATORIAMENTE:
+      *«¡Qué bien, ${hasRealName ? candidateName : 'linda'}! Tener ese espacio privado es una gran ventaja. 😊 Y cuéntame con total confianza: ¿tu pareja / las personas con quienes vives saben y te apoyan con que trabajes como modelo webcam? 🫶🏽»*
+      Está TERMINANTEMENTE PROHIBIDO saltar al Paso 5 de horarios o felicitarla diciendo «¡Qué maravilla contar con ese apoyo!» hasta que ella haya respondido explícitamente que SÍ la apoyan.
     * **CRITERIO ESTRICTO DE DESCALIFICACIÓN:**
       - Si la respuesta es NEGATIVA (te indica que NO saben, que se los oculta, que es un secreto, que lo haría a escondidas, o que NO están de acuerdo / NO la apoyan), la candidata NO CUMPLE LOS REQUISITOS.
       - Debes detener el proceso inmediatamente y aplicar el PROTOCOLO DE DESPEDIDA:
         *«Entiendo perfectamente, ${hasRealName ? candidateName : 'linda'}. En CamHouse valoramos ante todo tu tranquilidad y la armonía en tu hogar. Dado que para la modalidad desde casa es un requisito indispensable contar con el pleno conocimiento y apoyo de quienes conviven contigo, en esta oportunidad no podemos continuar con tu proceso. Te deseamos muchos éxitos y bendiciones en tus proyectos 💖✨»*
       - NUNCA continúes con preguntas del proceso ni pases al Paso 5 si no cuenta con el apoyo de las personas con quienes vive.
-    * **Si la respuesta es POSITIVA (SÍ saben y la apoyan):** Felicítala con calidez: *«¡Qué maravilla contar con ese apoyo en casa! Eso te dará muchísima tranquilidad 👑🥰»*, y continúa de inmediato con el **Paso 5 (Disponibilidad de Horarios)**.
+    * **Si la respuesta es POSITIVA (SÍ saben y la apoyan EXPLÍCITAMENTE):** Felicítala con calidez: *«¡Qué maravilla contar con ese apoyo en casa! Eso te dará muchísima tranquilidad 👑🥰»*, y continúa de inmediato con el **Paso 5 (Disponibilidad de Horarios)**.
 * **Paso 5: Disponibilidad de Horarios:**
   Valida si cuenta con 6 horas diarias flexibles (de lunes a sábado) y si podría iniciar pronto (en los próximos 3 días).
 * **Paso 6: Plataformas, Bloqueo y Menú Informativo de 4 Opciones:**
@@ -426,19 +471,13 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
   - Si la chica escribe "1", "2", "3", "4" o pregunta por alguno de ellos, respóndele de forma espléndida, estructurada y cálida (como en los ejemplos de la matriz), y luego pregúntale si le quedó claro o si desea continuar al Paso 7.
 * **Paso 7: Beneficios y 2 Fotos de Perfil:**
   Menciónale los beneficios (crédito para lencería, fotos, gimnasio, monitoras) y pídele con mucha amabilidad 2 fotos (una de rostro y una de cuerpo) para conocer su perfil, recordándole que no se discrimina a nadie.
-* **Paso 8: Confirmación de Cobertura para Préstamo de Equipos (8 Zonas Oficiales):**
-  - Agradece sus fotos y confirma en qué municipio o sector vive para la entrega del kit de equipos.
-  - REGLA ESTRICTA DE COBERTURA: El beneficio de préstamo de equipos con entrega e instalación en casa aplica exclusivamente para **Medellín** y los siguientes 7 municipios adicionales:
-    1. San Antonio de Prado
-    2. Sabaneta
-    3. Envigado
-    4. Copacabana
-    5. Girardota
-    6. Barbosa
-    7. La Estrella
-  - Si la candidata vive en cualquier otro municipio o ciudad (incluyendo Bello, Itagüí, Caldas, Rionegro, Bogotá, etc.), no cumple con la cobertura. Debes agradecerle y despedirte cordialmente indicándole que por ahora la entrega de equipos solo cubre Medellín y los 7 municipios autorizados.
+* **Paso 8: Confirmación de Ubicación (Valle de Aburrá y Área Metropolitana):**
+  - Agradece sus fotos y confirma en qué municipio o sector vive.
+  - La convocatoria cubre Medellín (todos sus barrios) y los municipios del Área Metropolitana: Bello, Itagüí, Envigado, Sabaneta, Caldas, La Estrella, San Antonio de Prado, Copacabana, Girardota y Barbosa.
+  - REGLA DE ORO DE TRANSPORTE Y EQUIPOS: No te comprometas con entregas ni hagas promesas específicas de transporte a ningún municipio; simplemente valida que pertenece al área metropolitana y avanza al Paso 9.
+  - Si vive en cualquier ciudad lejana fuera del área metropolitana (Bogotá, Cali, Barranquilla, Bucaramanga, Pereira, etc. o municipios lejanos de Antioquia como Rionegro), agradece y despídete amablemente indicando que por ahora la convocatoria es solo para Medellín y su Área Metropolitana.
 * **Paso 9: Cierre Exitoso y Contacto del Coordinador:**
-  Felicítala por completar el proceso y entrégale el contacto de nuestro coordinador al WhatsApp **3215863996**, recordándole siempre decirle que habló con **Alejandra Ramírez** para agendar la entrega de sus equipos profesionales.
+  Felicítala por completar el proceso y entrégale el contacto de nuestro coordinador al WhatsApp **3215863996**, recordándole siempre decirle que habló con **Alejandra Ramírez** para que él evalúe la ubicación y concrete todos los detalles finales directamente con ella.
 
 ---
 
@@ -450,7 +489,9 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
    "Hola, [Nombre/amigo]. Agradecemos sinceramente tu interés en CamHouse By C&A. Sin embargo, te informamos de manera muy respetuosa que esta postulación de modelaje webcam está dirigida exclusivamente a mujeres, por lo que en esta oportunidad no es posible continuar con tu proceso. Te deseamos muchos éxitos en tus proyectos."
    Está TERMINANTEMENTE PROHIBIDO tratar a un hombre como mujer, decirle "interesada", "linda", "chica", o continuar con los pasos del embudo.
 2. **Cero Frase "no es negociable":** NUNCA uses esa frase.
-3. **Fidelidad al Nombre:** Recuerda que la aspirante se llama **${hasRealName ? candidateName : 'linda'}** y tú eres **Alejandra Ramírez**.`;
+3. **Fidelidad al Nombre:** Recuerda que la aspirante se llama **${hasRealName ? candidateName : 'linda'}** y tú eres **Alejandra Ramírez**.
+4. **FILTRO ESTRICTO DE EDAD (22 A 40 AÑOS OBLIGATORIO):**
+   La postulación es estrictamente para mujeres entre 22 y 40 años. Si la persona indica una edad menor a 22 o mayor a 40 años (ej. 44 años), DEBES responder de inmediato con el rechazo oficial por lineamientos de edad. Queda TERMINANTEMENTE PROHIBIDO decirle que tiene la edad ideal o continuar haciéndole preguntas si no cumple la edad.`;
   }
 
   detectMale(text) {
@@ -653,6 +694,14 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
     reply = reply.replace(/\s*y\s+\*{0,2}no\s+es\s+negociable\*{0,2},?/gi, '');
     reply = reply.replace(/\*{0,2}no\s+es\s+negociable\*{0,2}/gi, '');
 
+    // Blindaje de Edad (Rango 22 a 40 años): Si la candidata tiene menos de 22 o más de 40 años, NUNCA felicitarla ni avanzar
+    const ageInSafeguards = this.extractCandidateAge(userMessage, conversationHistory);
+    if (ageInSafeguards !== null && (ageInSafeguards < 22 || ageInSafeguards > 40)) {
+      const nameForFarewell = candidateName && candidateName !== 'linda' ? candidateName : 'linda';
+      console.warn(`[AIAgent] Se interceptó edad fuera de rango en safeguards (${ageInSafeguards} años). Reemplazando por rechazo formal.`);
+      return `¡Mucho gusto, ${nameForFarewell}! ☺️ Agradecemos de corazón tu interés en CamHouse By C&A. Te contamos con mucho respeto que actualmente los lineamientos de nuestra convocatoria requieren una edad entre los **22 y 40 años**, por lo que en esta oportunidad no es posible continuar con el proceso. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`;
+    }
+
     // Blindaje Anti-Hombre en respuesta generada: Si la IA saludó a un hombre (ej: "¡Genial, Jesus!", "¡Qué bien, Juan!", "Mucho gusto, Carlos")
     const maleGreetingMatch = reply.match(/(?:¡?[Qq]u[eé]\s+bien|¡?[Mm]ucho\s+gusto|¡?[Pp]erfecto|¡?[Gg]enial|¡?[Ee]xcelente|¡?[Hh]ola(?:\s+de\s+nuevo)?|¡?[Bb]ienvenid[oa]),?\s+([A-Za-zÁ-ÿ]+)[!.,]?/i);
     if (maleGreetingMatch && maleGreetingMatch[1]) {
@@ -702,6 +751,26 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
         reply = `¡Claro que sí, ${candidateName}! Recuerda que hablaste con **Alejandra Ramírez** y todos los detalles finales y la entrega de tus equipos los coordinas directamente con nuestro coordinador al WhatsApp **3215863996** 📲. ¡Escríbele para agendar tu cita! 🫶🏽`;
       } else {
         reply = `¡Mucho gusto, ${candidateName}! ☺️ Algo súper importante: *aquí no tienes que invertir ni un solo peso*. Nosotras te prestamos todos los equipos desde el primer día y no necesitas experiencia previa. Cuéntame, ¿cuántos años tienes?`;
+      }
+    }
+
+    // Blindaje de Convivencia y Apoyo de Pareja/Familia (Paso 4):
+    // Si la candidata indica que vive acompañada (novio, esposo, pareja, papás, familia)
+    // NUNCA felicitarla por tener apoyo ni pasar al Paso 5 (horarios) si no ha confirmado explícitamente que la apoyan.
+    const livesAccompaniedRegex = /\b(?:vivo con|con mi|con mis|con amigos|con amigas|con familiares|mi novio|mi esposo|mi pareja|mis padres|mis papas|mis papás|mi mama|mi mamá|mi papa|mi papá)\b/i;
+    const confirmsSupportRegex = /\b(?:si sabe|si saben|si me apoya|si me apoyan|saben y me apoyan|sabe y me apoya|estan de acuerdo|esta de acuerdo|si estan de acuerdo|si esta de acuerdo|me apoya|me apoyan|cuenta con el apoyo|cuento con su apoyo|saben todo|lo saben|estan enterados|esta enterado)\b/i;
+
+    if (livesAccompaniedRegex.test(userMessage) && !confirmsSupportRegex.test(userMessage)) {
+      const hadConfirmedSupportBefore = Array.isArray(conversationHistory) && conversationHistory.some(m => !m.fromMe && m.text && confirmsSupportRegex.test(m.text));
+      if (!hadConfirmedSupportBefore) {
+        const praisesSupport = /(?:maravilla contar con ese apoyo|contar con ese apoyo|gran apoyo en casa|apoyo en casa|maravilla de apoyo)/i.test(reply);
+        const skipsToHours = /(?:disponibilidad|6 horas|lunes a sabado|iniciar pronto|proximos 3 dias)/i.test(reply);
+        const asksForSupport = /(?:saben y te apoyan|sabe y te apoya|saben y apoyan|cuenta con el apoyo|te apoya|te apoyan)/i.test(reply);
+
+        if (praisesSupport || (skipsToHours && !asksForSupport)) {
+          console.warn(`[AIAgent] Se interceptó felicitación indebida de apoyo o salto a horarios cuando la candidata vive acompañada sin confirmación. Forzando pregunta de apoyo.`);
+          reply = `¡Qué bien, ${candidateName}! Tener ese espacio privado es una gran ventaja. 😊\n\nY cuéntame con total confianza: ¿tu pareja / las personas con quienes vives saben y te apoyan con que trabajes como modelo webcam? 🫶🏽`;
+        }
       }
     }
 
@@ -774,6 +843,20 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       };
     }
 
+    // 2.1 Filtro Universal e Infalible de Edad (Rango 22 a 40 años)
+    const detectedAge = this.extractCandidateAge(userMessage, conversationHistory);
+    if (detectedAge !== null && (detectedAge < 22 || detectedAge > 40)) {
+      console.log(`[AIAgent] Candidata fuera de rango de edad detectada (${detectedAge} años). Despidiendo formalmente.`);
+      const nameForAgeFarewell = candidateName && candidateName !== 'linda' ? candidateName : 'linda';
+      return {
+        text: `¡Mucho gusto, ${nameForAgeFarewell}! ☺️ Agradecemos de corazón tu interés en CamHouse By C&A. Te contamos con mucho respeto que actualmente los lineamientos de nuestra convocatoria requieren una edad entre los **22 y 40 años**, por lo que en esta oportunidad no es posible continuar con el proceso. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
+        isHandoff: false,
+        isRejected: true,
+        rejectionStatus: 'Fuera de Rango de Edad',
+        reason: `Edad fuera de rango permitido (${detectedAge} años)`
+      };
+    }
+
     // 2.5 Detección de pregunta por el nombre de la asesora ("¿y con quién hablé?", "¿cómo te llamas?", "¿de parte de quién?")
     const isAskingAgentName = (
       lowerUserMsg.includes('con quien hable') ||
@@ -797,18 +880,18 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       };
     }
 
-    // 2.6 Cobertura Oficial para Préstamo de Equipos (Medellín + 7 municipios autorizados)
-    const allowedCoverageAreas = /\b(?:medellin|san antonio de prado|sabaneta|envigado|copacabana|girardota|barbosa|la estrella|estrella|castilla|belen|poblado|provenza|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san cristobal|altavista|santa elena|san felix|san diego|san lucas|san joaquin|estadio|la floresta|floresta|la america|america|patio bonito|conquistadores)\b/i;
-    const outOfCoverageCities = /\b(?:bello|itagui|caldas|rionegro|la ceja|marinilla|guarne|bogota|cali|barranquilla|cartagena|bucaramanga|cucuta|pereira|manizales|armenia|santa marta|ibague|pasto|monteria|villavicencio|neiva|valledupar|popayan|sincelejo|tunja|riohacha|quibdo|yopal|florencia|palmira|buenaventura|soacha|tulua|buga|cartago|sogamoso|duitama|barrancabermeja|girardot|dosquebradas)\b/i;
+    // 2.6 Cobertura Oficial (Medellín + Todo el Área Metropolitana del Valle de Aburrá)
+    const allowedCoverageAreas = /\b(?:medellin|bello|itagui|itagüi|caldas|san antonio de prado|la estrella|estrella|sabaneta|envigado|copacabana|girardota|barbosa|castilla|belen|poblado|provenza|laureles|robledo|manrique|aranjuez|buenos aires|san javier|guayabal|santa cruz|popular|doce de octubre|villa hermosa|candelaria|san cristobal|altavista|santa elena|san felix|san diego|san lucas|san joaquin|estadio|la floresta|floresta|la america|america|patio bonito|conquistadores)\b/i;
+    const outOfCoverageCities = /\b(?:rionegro|la ceja|marinilla|guarne|bogota|cali|barranquilla|cartagena|bucaramanga|cucuta|pereira|manizales|armenia|santa marta|ibague|pasto|monteria|villavicencio|neiva|valledupar|popayan|sincelejo|tunja|riohacha|quibdo|yopal|florencia|palmira|buenaventura|soacha|tulua|buga|cartago|sogamoso|duitama|barrancabermeja|girardot|dosquebradas)\b/i;
 
     if (outOfCoverageCities.test(lowerUserMsg) && !allowedCoverageAreas.test(lowerUserMsg)) {
       console.log(`[AIAgent] Ubicación fuera de cobertura detectada ("${userMessage}"). Enviando despedida amable y desactivando IA.`);
       return {
-        text: `¡Muchas gracias por tu interés en CamHouse, ${candidateName}! ☺️ Te contamos con mucho cariño que por el momento el beneficio de préstamo de equipos con entrega e instalación en casa aplica exclusivamente para **Medellín** y los siguientes municipios autorizados: **San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella**.\n\nSi más adelante te trasladas a alguna de estas zonas o abrimos cobertura en tu municipio, estaremos felices de recibirte. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
+        text: `¡Muchas gracias por tu interés en CamHouse, ${candidateName}! ☺️ Te contamos con mucho cariño que por el momento nuestra convocatoria aplica exclusivamente para **Medellín y el Área Metropolitana** (Bello, Itagüí, Envigado, Sabaneta, Caldas, La Estrella, San Antonio de Prado, Copacabana, Girardota y Barbosa).\n\nSi más adelante te trasladas a alguna de estas zonas o abrimos cobertura en tu municipio, estaremos felices de recibirte. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
         isHandoff: false,
         isRejected: true,
         rejectionStatus: 'Fuera de Cobertura',
-        reason: 'Candidata fuera de cobertura oficial de préstamo de equipos'
+        reason: 'Candidata fuera de cobertura oficial de Medellín y Área Metropolitana'
       };
     }
 
@@ -849,28 +932,15 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       !outOfCoverageCities.test(lowerUserMsg);
 
     if (isGenericColombiaLocation) {
-      const ageMatch = lowerUserMsg.match(/\b(\d{2})\s*(?:anos|años)?\b/);
-      const age = ageMatch ? parseInt(ageMatch[1], 10) : null;
-
-      if (age !== null && (age < 22 || age > 40)) {
+      if (detectedAge !== null && detectedAge >= 22 && detectedAge <= 40) {
         return {
-          text: `¡Mucho gusto, ${candidateName}! ☺️ Agradecemos de corazón tu interés en CamHouse By C&A. Te contamos con mucho respeto que actualmente los lineamientos de nuestra convocatoria requieren una edad entre los **22 y 40 años**, por lo que en esta oportunidad no es posible continuar con el proceso. ¡Te deseamos muchos éxitos en todos tus proyectos! 👑✨`,
-          isHandoff: false,
-          isRejected: true,
-          rejectionStatus: 'Fuera de Rango de Edad',
-          reason: `Edad fuera de rango (${age} años)`
-        };
-      }
-
-      if (age !== null && age >= 22 && age <= 40) {
-        return {
-          text: `¡Mucho gusto, ${candidateName}! ☺️ Con tus ${age} años cumples súper bien con la edad ideal, y algo muy importante: *aquí no tienes que invertir ni un solo peso* porque te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente? Recuerda que entregamos todos los equipos directamente en tu casa en **Medellín, San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella** 💻✨`,
+          text: `¡Mucho gusto, ${candidateName}! ☺️ Con tus ${detectedAge} años cumples súper bien con la edad ideal, y algo muy importante: *aquí no tienes que invertir ni un solo peso* porque te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente? Recuerda que nuestra convocatoria cubre **Medellín y los municipios del Área Metropolitana** (Bello, Itagüí, Envigado, Sabaneta, Caldas, La Estrella, San Antonio de Prado, Copacabana, Girardota y Barbosa) ✨`,
           isHandoff: false
         };
       }
 
       return {
-        text: `¡Mucho gusto, ${candidateName}! ☺️ Recuerda que aquí *no tienes que invertir ni un solo peso* porque nosotras te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente, y cuántos años tienes? Recuerda que nuestra entrega de equipos en casa es en **Medellín, San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella** 💻✨`,
+        text: `¡Mucho gusto, ${candidateName}! ☺️ Recuerda que aquí *no tienes que invertir ni un solo peso* porque nosotras te prestamos todos los equipos desde el primer día 👑\n\nCuéntame, ¿en qué municipio y barrio vives actualmente, y cuántos años tienes? Recuerda que nuestra convocatoria cubre **Medellín y los municipios del Área Metropolitana** (Bello, Itagüí, Envigado, Sabaneta, Caldas, La Estrella, San Antonio de Prado, Copacabana, Girardota y Barbosa) ✨`,
         isHandoff: false
       };
     }
@@ -886,12 +956,14 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       if (replyText.includes('pleno conocimiento y apoyo de quienes conviven contigo') || replyText.includes('tranquilidad y la armonía en tu hogar') || replyText.includes('armonía en tu hogar')) {
         return { isRejected: true, rejectionStatus: 'No Apta - Convivencia sin apoyo' };
       }
+      if (replyText.includes('requieren una edad entre los **22 y 40 años**') || replyText.includes('requieren una edad entre')) {
+        return { isRejected: true, rejectionStatus: 'Fuera de Rango de Edad' };
+      }
       if (
         replyText.includes('no es posible continuar con tu proceso') ||
         replyText.includes('los lineamientos de la postulación no permiten continuar') ||
         replyText.includes('cambias de opinión') ||
-        replyText.includes('municipios autorizados') ||
-        replyText.includes('cobertura para entrega e instalación de equipos')
+        (replyText.includes('aplica exclusivamente para') && replyText.includes('abrimos cobertura'))
       ) {
         return { isRejected: true, rejectionStatus: 'Proceso Cerrado' };
       }
@@ -1093,9 +1165,9 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
       return {
         text: `¡Claro, ${nameToUse}! ☺️ Sobre el **Kit de Equipos Profesionales**:
 
-1. *Equipamiento completo:* Te llevamos a tu casa computador gamer de alta potencia para 3 plataformas a la vez, cámara 4K Sony profesional, iluminación LED/RGB, monitor, trípode y decoración 💻✨
-2. *Cero inversión:* El préstamo y la entrega son **100% gratuitos**, ¡no tienes que poner ni un solo peso de tu bolsillo! 👑
-3. *Cobertura:* Disponible para Medellín y los municipios autorizados (San Antonio de Prado, Sabaneta, Envigado, Copacabana, Girardota, Barbosa y La Estrella) 🚚
+1. *Equipamiento completo:* Te brindamos computador gamer de alta potencia para 3 plataformas a la vez, cámara 4K Sony profesional, iluminación LED/RGB, monitor, trípode y accesorios 💻✨
+2. *Cero inversión:* El préstamo de los equipos es **100% gratuito**, ¡no tienes que poner ni un solo peso de tu bolsillo! 👑
+3. *Cobertura:* Disponible para Medellín y los municipios del Área Metropolitana (Bello, Itagüí, Envigado, Sabaneta, Caldas, La Estrella, San Antonio de Prado, Copacabana, Girardota y Barbosa) ✨
 
 ¿Te parece genial? Cuéntame si tienes alguna otra duda o si continuamos 🫶🏽`,
         isHandoff: false
@@ -1108,7 +1180,7 @@ Conduce la postulación paso a paso con naturalidad (si ella responde la pregunt
 
 1. *Capacitación:* Recibes formación desde cero, así que no necesitas ninguna experiencia previa 👩🏻‍💻
 2. *Acompañamiento:* Tendrás una monitora mujer que te apoyará durante tus turnos para que nunca estés sola 🫶
-3. *Entrega de equipos:* Tras validar tus foticos y sector, te pasamos el contacto de nuestro coordinador para agendar la visita de instalación en tu casa 👑✨
+3. *Contacto directo con el coordinador:* Tras validar tus foticos y sector dentro del Área Metropolitana, te pasamos el contacto de nuestro coordinador para concretar todos los pasos finales 👑✨
 
 ¿Estás lista para continuar con los beneficios y tus fotos de perfil? 💖`,
         isHandoff: false

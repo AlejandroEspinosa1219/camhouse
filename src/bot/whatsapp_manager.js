@@ -811,16 +811,52 @@ class WhatsAppManager {
             continue;
           }
 
-          // Socket aparentemente abierto: enviar ping de presencia activa para evitar conexiones zombie por NAT/router
+          // Active WS Ping Check: Verificar respuesta bidireccional a nivel de frame WebSocket (RFC 6455)
+          // Esto detecta sockets zombie en Windows donde readyState sigue en 1 pero la conexión TCP real murió
+          let isSocketAlive = true;
+          if (ws && typeof ws.ping === 'function') {
+            try {
+              isSocketAlive = await new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                  ws.removeListener('pong', onPong);
+                  resolve(false);
+                }, 8000);
+
+                function onPong() {
+                  clearTimeout(timeout);
+                  ws.removeListener('pong', onPong);
+                  resolve(true);
+                }
+
+                ws.once('pong', onPong);
+                try {
+                  ws.ping();
+                } catch (e) {
+                  clearTimeout(timeout);
+                  ws.removeListener('pong', onPong);
+                  resolve(false);
+                }
+              });
+            } catch (_) {
+              isSocketAlive = false;
+            }
+          }
+
+          if (!isSocketAlive) {
+            console.warn(`[WhatsAppManager] 🛡️ [Watchdog] Conexión zombie detectada en ${line.name} (sin respuesta pong en 8s). Reiniciando silenciosamente...`);
+            await this.restartLineQuietly(lineKey);
+            continue;
+          }
+
+          // Ping de presencia para mantener NAT/router activo
           try {
             await line.socket.sendPresenceUpdate('available');
-          } catch (pingErr) {
-            console.warn(`[WhatsAppManager] 🛡️ [Watchdog] Falló ping de presencia en ${line.name} (${pingErr.message}). Conexión muerta/zombie detectada. Reconectando...`);
-            await this.restartLineQuietly(lineKey);
+          } catch (presenceErr) {
+            console.warn(`[WhatsAppManager] 🛡️ [Watchdog] Error en sendPresenceUpdate de ${line.name}:`, presenceErr.message);
           }
-        } else if (line.status === 'connecting' && !line.isStarting) {
-          // Si lleva tiempo en 'connecting' sin proceso activo
-          console.log(`[WhatsAppManager] 🛡️ [Watchdog] ${line.name} en estado 'connecting' sin proceso activo. Reintentando arranque...`);
+        } else if ((line.status === 'connecting' || line.status === 'disconnected') && !line.isStarting) {
+          // Si lleva tiempo en 'connecting' o 'disconnected' con credenciales válidas en disco
+          console.log(`[WhatsAppManager] 🛡️ [Watchdog] ${line.name} inactivo o desconectado con sesión guardada (status: ${line.status}). Restaurando conexión...`);
           await this.startLine(lineKey);
         }
       } catch (err) {
